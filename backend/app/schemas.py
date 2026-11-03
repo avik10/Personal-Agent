@@ -27,3 +27,9 @@ class CreateEventModel(BaseModel):
     end_time: str = Field(..., description="ISO 8601 end time or date")
     description: Optional[str] = Field(None, description="Event notes or agenda")
     add_meet_link: bool = Field(True, description="Whether to generate a Google Meet video conference link")
+
+
+class CreateNoteModel(BaseModel):
+    title: str = Field(..., description="Note or task title")
+    notes: Optional[str] = Field(None, description="Detailed notes body or checklist description")
+    due_date: Optional[str] = Field(None, description="Optional due date in ISO 8601 or RFC 3339 format")

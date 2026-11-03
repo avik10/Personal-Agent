@@ -476,7 +476,7 @@ export default function ChatArea({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <Sparkles size={36} className="animate-pulse-subtle" color="#a855f7" />
-            <h1
+            <h3
               className="gradient-text"
               style={{
                 fontSize: '42px',
@@ -485,8 +485,8 @@ export default function ChatArea({
                 lineHeight: 1.1,
               }}
             >
-              Hello, Avik
-            </h1>
+              Hello,
+            </h3>
           </div>
           <p style={{ fontSize: '22px', fontWeight: 500, color: '#9ca3af', letterSpacing: '-0.02em', maxWidth: '480px' }}>
             How can I help you today?

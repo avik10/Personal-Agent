@@ -4,7 +4,7 @@ __pycache__/
 .env
 .env.*
 .DS_Store
-
+frontend/dist/*
 # Persistent storage runtime data
 storage/*.log
 *.log

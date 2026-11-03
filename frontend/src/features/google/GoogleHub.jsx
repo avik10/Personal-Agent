@@ -12,11 +12,13 @@ import {
   ArrowRight,
   FileText,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  CheckSquare
 } from 'lucide-react';
 import GmailView from './GmailView';
 import CalendarView from './CalendarView';
 import DriveView from './DriveView';
+import NotesView from './NotesView';
 import GoogleConnectModal from './GoogleConnectModal';
 
 export default function GoogleHub({
@@ -79,14 +81,14 @@ export default function GoogleHub({
       quickPrompt: 'What files are in my Google Drive?',
     },
     {
-      id: 'docs_tasks',
-      title: 'Docs & Tasks MCP',
-      tag: 'Workspace MCP',
-      tagColor: '#c084fc',
-      tagBg: 'rgba(192, 132, 252, 0.15)',
-      desc: 'Read structural document trees, append paragraphs, manage Google Tasks, and check off items.',
-      icon: <FileText size={20} color="#c084fc" />,
-      quickPrompt: 'List my Google Tasks and check any pending to-dos',
+      id: 'notes',
+      title: 'Notes & Tasks MCP',
+      tag: 'Notes & Keep MCP',
+      tagColor: '#f59e0b',
+      tagBg: 'rgba(245, 158, 11, 0.15)',
+      desc: 'Sync notes and to-dos with Google Keep/Tasks, add reminders, check off completed items, and search.',
+      icon: <CheckSquare size={20} color="#fbbf24" />,
+      quickPrompt: 'List all my notes and pending tasks from Google',
     },
   ];
 
@@ -236,11 +238,7 @@ export default function GoogleHub({
               <div
                 key={m.id}
                 onClick={() => {
-                  if (m.id === 'docs_tasks') {
-                    onAskAgent(m.quickPrompt);
-                  } else {
-                    setActiveTab(m.id);
-                  }
+                  setActiveTab(m.id);
                 }}
                 style={{
                   padding: '14px 16px',
@@ -406,6 +404,27 @@ export default function GoogleHub({
             <HardDrive size={15} />
             <span>Drive MCP View</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('notes')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '12px',
+              background: activeTab === 'notes' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+              border: activeTab === 'notes' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid transparent',
+              color: activeTab === 'notes' ? '#fbbf24' : '#9ca3af',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            <CheckSquare size={15} />
+            <span>Notes & Tasks MCP View</span>
+          </button>
         </div>
 
         <span style={{ fontSize: '11px', color: '#6b7280' }}>
@@ -418,6 +437,7 @@ export default function GoogleHub({
         {activeTab === 'gmail' && <GmailView onAskAgent={onAskAgent} />}
         {activeTab === 'calendar' && <CalendarView onAskAgent={onAskAgent} />}
         {activeTab === 'drive' && <DriveView onAskAgent={onAskAgent} />}
+        {activeTab === 'notes' && <NotesView onAskAgent={onAskAgent} />}
       </div>
 
       {/* Scoped Google Assistant Input */}
@@ -452,6 +472,8 @@ export default function GoogleHub({
                 ? 'Ask about your emails (e.g., "Check unread emails from John and draft a reply")'
                 : activeTab === 'calendar'
                 ? 'Ask about your agenda (e.g., "What meetings do I have tomorrow? Schedule sync at 4pm")'
+                : activeTab === 'notes'
+                ? 'Ask about your notes or tasks (e.g., "Add note: finish presentation deck", "What tasks are pending?")'
                 : 'Ask about Drive (e.g., "Find the latest quarterly report and summarize it")'
             }
             style={{

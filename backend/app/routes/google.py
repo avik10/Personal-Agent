@@ -12,9 +12,15 @@ from agent.mcp_google.auth import is_authenticated, get_account_info
 from agent.mcp_google.services.gmail import gmail_search_messages, gmail_send_message
 from agent.mcp_google.services.calendar import calendar_get_agenda, calendar_create_event
 from agent.mcp_google.services.drive import drive_search_files
+from agent.mcp_google.services.tasks import (
+    tasks_list_tasks,
+    tasks_create_task,
+    tasks_complete_task,
+    tasks_delete_task,
+)
 from agent.mcp_google.setup_auth import run_auth_flow
 from agent.mcp_google.config import CREDENTIALS_PATH, TOKEN_PATH, DEFAULT_SCOPES
-from ..schemas import SendEmailModel, CreateEventModel
+from ..schemas import SendEmailModel, CreateEventModel, CreateNoteModel
 
 router = APIRouter(prefix="/api/google", tags=["Google Workspace"])
 
@@ -271,3 +277,55 @@ async def get_google_drive(query: str = "", page_size: int = 20):
         return await asyncio.to_thread(drive_search_files, query=query, page_size=page_size)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/notes")
+async def get_google_notes(show_completed: bool = True, max_results: int = 50):
+    """Fetch notes and tasks from Google Tasks / Keep."""
+    if not is_authenticated():
+        raise HTTPException(status_code=401, detail="Google account not authenticated")
+    try:
+        return await asyncio.to_thread(
+            tasks_list_tasks, show_completed=show_completed, max_results=max_results
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/notes/create")
+async def create_google_note(payload: CreateNoteModel):
+    """Create a new note or task in Google Tasks / Keep."""
+    if not is_authenticated():
+        raise HTTPException(status_code=401, detail="Google account not authenticated")
+    try:
+        return await asyncio.to_thread(
+            tasks_create_task,
+            title=payload.title,
+            notes=payload.notes,
+            due_date=payload.due_date,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/notes/{task_id}/complete")
+async def complete_google_note(task_id: str):
+    """Mark a note/task as completed in Google Tasks."""
+    if not is_authenticated():
+        raise HTTPException(status_code=401, detail="Google account not authenticated")
+    try:
+        return await asyncio.to_thread(tasks_complete_task, task_id=task_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/notes/{task_id}")
+async def delete_google_note(task_id: str):
+    """Delete a note or task in Google Tasks."""
+    if not is_authenticated():
+        raise HTTPException(status_code=401, detail="Google account not authenticated")
+    try:
+        return await asyncio.to_thread(tasks_delete_task, task_id=task_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

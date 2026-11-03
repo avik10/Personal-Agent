@@ -343,6 +343,26 @@ export default function Sidebar({
                   <HardDrive size={12} />
                   <span>Drive</span>
                 </div>
+
+                <div
+                  onClick={() => handleSelectGoogleTab('notes')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '5px 10px',
+                    borderRadius: '8px',
+                    color: '#fbbf24',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    background: 'rgba(245, 158, 11, 0.06)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.06)')}
+                >
+                  <CheckSquare size={12} />
+                  <span>Notes & Tasks</span>
+                </div>
               </div>
             )}
           </div>
