@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.env.*
+.DS_Store
+
+# Persistent storage runtime data
+storage/*.log
+*.log
+
+# Google OAuth Credentials & Tokens
+credentials*.json
+token*.json
+storage/google_credentials/

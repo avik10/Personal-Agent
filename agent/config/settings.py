@@ -1,0 +1,62 @@
+"""Central Configuration & Environment Settings for Personal Agent."""
+
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Base agent directory and project root
+AGENT_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = AGENT_DIR  # Backwards compatibility
+PROJECT_ROOT = AGENT_DIR.parent
+
+# Load environment variables (.env and .env.prod support)
+# 1. Load default .env from project root or agent directory
+load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(AGENT_DIR / ".env")
+
+# 2. Support custom environment files (e.g. ENV_FILE=.env.prod or APP_ENV=production)
+custom_env = os.getenv("ENV_FILE")
+app_env = os.getenv("APP_ENV", "").lower().strip()
+
+if custom_env:
+    custom_path = Path(custom_env) if Path(custom_env).is_absolute() else PROJECT_ROOT / custom_env
+    if custom_path.exists():
+        load_dotenv(custom_path, override=True)
+elif app_env in ("prod", "production") and (PROJECT_ROOT / ".env.prod").exists():
+    load_dotenv(PROJECT_ROOT / ".env.prod", override=True)
+elif (PROJECT_ROOT / ".env.prod").exists() and not (PROJECT_ROOT / ".env").exists():
+    # In cloud environments where only .env.prod is provided
+    load_dotenv(PROJECT_ROOT / ".env.prod", override=True)
+
+# Storage directory and data file paths (inside agent/storage)
+STORAGE_DIR = AGENT_DIR / "storage"
+STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+NOTES_FILE = STORAGE_DIR / "notes.txt"
+TODO_FILE = STORAGE_DIR / "todos.json"
+ACTIVITY_LOG_FILE = STORAGE_DIR / "activity.log"
+EXPENSES_FILE = STORAGE_DIR / "expenses.json"
+HABITS_FILE = STORAGE_DIR / "habits.json"
+KNOWLEDGE_FILE = STORAGE_DIR / "knowledge.json"
+
+# Instructions path (inside agent/instructions)
+INSTRUCTIONS_DIR = AGENT_DIR / "instructions"
+INSTRUCTIONS_FILE = INSTRUCTIONS_DIR / "instructions.md"
+
+# LLM Provider Configuration ('ollama' for local development, 'groq' for 24/7 cloud production)
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+
+# Ollama LLM Configuration (Local Mode)
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+MODEL_NAME = os.getenv("MODEL_NAME", "qwen3.5:8b")
+TEMPERATURE = float(os.getenv("TEMPERATURE", "0.8"))
+
+# Groq Cloud API Configuration (for 24/7 cloud deployment)
+# Get a free key at https://console.groq.com/keys
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+# OpenWeatherMap API Configuration
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
+WEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
+WEATHER_GEO_URL = "http://api.openweathermap.org/geo/1.0/direct"
