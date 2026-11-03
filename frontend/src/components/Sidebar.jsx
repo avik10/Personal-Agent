@@ -105,16 +105,13 @@ export default function Sidebar({
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          className="mobile-backdrop"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 flex flex-col w-72 bg-[#131316] border-r border-white/5 transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
-        style={{ width: '280px', minWidth: '280px', height: '100vh' }}
+        className={`app-sidebar ${isOpen ? 'open' : ''}`}
       >
         {/* Top Header & New Chat Button */}
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>

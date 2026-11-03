@@ -34,7 +34,7 @@ if env_creds and not CREDENTIALS_PATH.exists():
         CREDENTIALS_PATH.parent.mkdir(parents=True, exist_ok=True)
         with open(CREDENTIALS_PATH, "w") as f:
             f.write(env_creds.strip())
-    except Exception:
+    except Exception as e:
         pass
 
 env_token = os.getenv("GOOGLE_TOKEN_JSON") or os.getenv("GOOGLE_WORKSPACE_TOKEN")
@@ -43,7 +43,7 @@ if env_token and not TOKEN_PATH.exists():
         TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
         with open(TOKEN_PATH, "w") as f:
             f.write(env_token.strip())
-    except Exception:
+    except Exception as e:
         pass
 
 # Target OAuth Scopes
@@ -58,4 +58,7 @@ DEFAULT_SCOPES = [
     "https://www.googleapis.com/auth/documents",
     # Tasks: read, create, and complete tasks
     "https://www.googleapis.com/auth/tasks",
+    # Keep: read, create, and delete notes
+    "https://www.googleapis.com/auth/keep",
+    "https://www.googleapis.com/auth/keep.readonly",
 ]

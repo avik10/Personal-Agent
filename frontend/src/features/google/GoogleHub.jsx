@@ -94,13 +94,13 @@ export default function GoogleHub({
 
   return (
     <div
+      className="google-hub-container"
       style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflowY: 'auto',
-        padding: '24px 32px',
         maxWidth: '1280px',
         margin: '0 auto',
         width: '100%',

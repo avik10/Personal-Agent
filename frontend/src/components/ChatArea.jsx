@@ -450,12 +450,12 @@ export default function ChatArea({
 
   return (
     <div
+      className="chat-area-container"
       style={{
         flex: 1,
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        padding: '24px 20px',
         maxWidth: '860px',
         width: '100%',
         margin: '0 auto',
@@ -476,7 +476,7 @@ export default function ChatArea({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <Sparkles size={36} className="animate-pulse-subtle" color="#a855f7" />
-            <h3
+            <h1
               className="gradient-text"
               style={{
                 fontSize: '42px',
@@ -485,8 +485,8 @@ export default function ChatArea({
                 lineHeight: 1.1,
               }}
             >
-              Hello,
-            </h3>
+              Hello, Avik
+            </h1>
           </div>
           <p style={{ fontSize: '22px', fontWeight: 500, color: '#9ca3af', letterSpacing: '-0.02em', maxWidth: '480px' }}>
             How can I help you today?

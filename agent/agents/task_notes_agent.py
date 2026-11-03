@@ -20,18 +20,23 @@ from mcp_google.services.tasks import (
     tasks_complete_task,
     tasks_delete_task,
 )
+from mcp_google.services.keep import (
+    keep_create_note,
+    keep_list_notes,
+    keep_delete_note,
+)
 
 task_notes_tools = [
     # Google Workspace Cloud Notes & Tasks (Google Keep / Google Tasks)
     StructuredTool.from_function(
-        tasks_create_task,
+        keep_create_note,
         name="google_create_note_or_task",
-        description="Create a note or task in Google Tasks/Keep cloud. Saves title and optional notes body.",
+        description="Create a note or task in Google Keep/Tasks cloud storage. Saves title and optional notes body.",
     ),
     StructuredTool.from_function(
-        tasks_list_tasks,
+        keep_list_notes,
         name="google_list_notes_or_tasks",
-        description="List notes and tasks from Google Tasks/Keep cloud. Shows pending and completed items.",
+        description="List all notes and tasks from Google Keep and Google Tasks cloud. Shows active and completed items.",
     ),
     StructuredTool.from_function(
         tasks_complete_task,
@@ -39,9 +44,9 @@ task_notes_tools = [
         description="Mark a task as completed in Google Tasks.",
     ),
     StructuredTool.from_function(
-        tasks_delete_task,
-        name="google_delete_task",
-        description="Delete a note or task from Google Tasks.",
+        keep_delete_note,
+        name="google_delete_note_or_task",
+        description="Delete a note or task from Google Keep or Google Tasks.",
     ),
     # Local Storage fallback
     StructuredTool.from_function(
