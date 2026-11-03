@@ -30,7 +30,7 @@ from mcp_google.services.keep import (
 
 
 def agent_google_list_notes_or_tasks(max_results: int = 50) -> str:
-    """List all notes and tasks from Google Tasks / Keep cloud storage."""
+    """List all notes and tasks from Google Workspace cloud storage."""
     try:
         items = keep_list_notes(max_results=max_results)
         if not items:
@@ -40,10 +40,12 @@ def agent_google_list_notes_or_tasks(max_results: int = 50) -> str:
         for idx, item in enumerate(items, 1):
             title = item.get("title") or "Untitled Note"
             notes = (item.get("notes") or "").strip()
+            source = item.get("source", "google_tasks")
+            source_label = "Google Tasks (Gmail/Calendar sidebar)" if source == "google_tasks" else "Google Keep"
             status = "Completed" if item.get("status") == "completed" else "Active"
             due = f" [Due: {item.get('due')}]" if item.get("due") else ""
             desc = f" - Details: {notes}" if notes else ""
-            lines.append(f"{idx}. [{status}] {title}{due}{desc}")
+            lines.append(f"{idx}. [{status}] [{source_label}] {title}{due}{desc}")
 
         return "\n".join(lines)
     except Exception as e:
@@ -51,14 +53,22 @@ def agent_google_list_notes_or_tasks(max_results: int = 50) -> str:
 
 
 def agent_google_create_note(title: str, notes: Optional[str] = None, due_date: Optional[str] = None) -> str:
-    """Create a note or task in Google Keep/Tasks cloud storage."""
+    """Create a note or task in Google cloud storage."""
     try:
         clean_title = (title or "").strip()
         if not clean_title:
             return "Error: Note title cannot be empty."
 
         res = keep_create_note(title=clean_title, text=notes, due_date=due_date)
-        return f"Successfully saved note to Google: '{clean_title}'."
+        source = res.get("source", "google_tasks")
+        if source == "google_tasks":
+            return (
+                f"Successfully saved note to your Google account via Google Tasks: '{clean_title}'. "
+                f"It is live in your Google account and viewable in the Gmail right-sidebar (Tasks icon), "
+                f"Google Calendar (calendar.google.com), and the Notes & Tasks studio tab."
+            )
+        else:
+            return f"Successfully saved note to Google Keep: '{clean_title}'. Viewable at https://keep.google.com."
     except Exception as e:
         return f"Could not save note to Google: {e}"
 

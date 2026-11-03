@@ -136,6 +136,27 @@ export default function NotesView({ onAskAgent }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Google Account Sync Banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          borderRadius: '12px',
+          background: 'rgba(251, 191, 36, 0.08)',
+          border: '1px solid rgba(251, 191, 36, 0.25)',
+          color: '#fbbf24',
+          fontSize: '12px',
+          lineHeight: '1.5',
+        }}
+      >
+        <CheckSquare size={16} style={{ flexShrink: 0 }} />
+        <span>
+          <strong>Google Workspace Account Sync:</strong> Notes and to-dos are stored securely in your real Google Account via <strong>Google Tasks</strong>. They appear automatically in your <strong>Gmail right-sidebar (Tasks checkmark)</strong>, <strong>Google Calendar</strong> (calendar.google.com), and the <strong>Google Tasks mobile app</strong>.
+        </span>
+      </div>
+
       {/* Search & Actions Bar */}
       <div
         style={{
@@ -346,7 +367,20 @@ export default function NotesView({ onAskAgent }) {
                       </p>
                     )}
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: '#fbbf24',
+                          background: 'rgba(251, 191, 36, 0.12)',
+                          padding: '1px 8px',
+                          borderRadius: '6px',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.source === 'google_keep' ? 'Google Keep' : 'Google Tasks (Gmail/Calendar)'}
+                      </span>
+
                       {item.due && (
                         <span style={{ fontSize: '11px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <CalendarIcon size={12} />
