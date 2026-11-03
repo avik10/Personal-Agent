@@ -27,6 +27,7 @@ from mcp_google.services.keep import (
     keep_list_notes,
     keep_delete_note,
 )
+from tools.keep_mcp_tools import google_keep_mcp_tools
 
 
 def agent_google_list_notes_or_tasks(max_results: int = 50) -> str:
@@ -82,6 +83,8 @@ def agent_google_delete_note(note_id: str) -> str:
 
 
 task_notes_tools = [
+    # Direct Google Keep MCP Server Tools
+    *google_keep_mcp_tools,
     # Google Workspace Cloud Notes & Tasks (String outputs safe for Groq & OpenAI)
     StructuredTool.from_function(
         agent_google_create_note,
