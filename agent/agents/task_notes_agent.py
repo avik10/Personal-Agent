@@ -1,5 +1,7 @@
 """Task & Notes Specialist Agent with Google Workspace Cloud & Local Storage."""
 
+import json
+from typing import Optional
 from langchain_core.tools import StructuredTool
 from langgraph.prebuilt import create_react_agent
 
@@ -26,25 +28,78 @@ from mcp_google.services.keep import (
     keep_delete_note,
 )
 
+
+def agent_google_list_notes_or_tasks(max_results: int = 50) -> str:
+    """List all notes and tasks from Google Tasks / Keep cloud storage."""
+    try:
+        items = keep_list_notes(max_results=max_results)
+        if not items:
+            return "No notes or tasks found in connected Google Workspace account."
+
+        lines = []
+        for idx, item in enumerate(items, 1):
+            title = item.get("title") or "Untitled Note"
+            notes = (item.get("notes") or "").strip()
+            status = "Completed" if item.get("status") == "completed" else "Active"
+            due = f" [Due: {item.get('due')}]" if item.get("due") else ""
+            desc = f" - Details: {notes}" if notes else ""
+            lines.append(f"{idx}. [{status}] {title}{due}{desc}")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Could not retrieve Google notes: {e}"
+
+
+def agent_google_create_note(title: str, notes: Optional[str] = None, due_date: Optional[str] = None) -> str:
+    """Create a note or task in Google Keep/Tasks cloud storage."""
+    try:
+        clean_title = (title or "").strip()
+        if not clean_title:
+            return "Error: Note title cannot be empty."
+
+        res = keep_create_note(title=clean_title, text=notes, due_date=due_date)
+        return f"Successfully saved note to Google: '{clean_title}'."
+    except Exception as e:
+        return f"Could not save note to Google: {e}"
+
+
+def agent_google_complete_task(task_id: str) -> str:
+    """Mark a task as completed in Google Tasks."""
+    try:
+        res = tasks_complete_task(task_id=task_id)
+        return f"Task '{res.get('title', task_id)}' marked as completed."
+    except Exception as e:
+        return f"Could not complete task in Google: {e}"
+
+
+def agent_google_delete_note(note_id: str) -> str:
+    """Delete a note or task in Google Tasks / Keep."""
+    try:
+        res = keep_delete_note(note_id=note_id)
+        return f"Item '{note_id}' successfully deleted from Google."
+    except Exception as e:
+        return f"Could not delete note in Google: {e}"
+
+
 task_notes_tools = [
-    # Google Workspace Cloud Notes & Tasks (Google Keep / Google Tasks)
+    # Google Workspace Cloud Notes & Tasks (String outputs safe for Groq & OpenAI)
     StructuredTool.from_function(
-        keep_create_note,
+        agent_google_create_note,
         name="google_create_note_or_task",
-        description="Create a note or task in Google Keep/Tasks cloud storage. Saves title and optional notes body.",
+        description="Create a note or task in Google Keep/Tasks cloud storage. Saves title, optional notes body, and optional due date.",
     ),
     StructuredTool.from_function(
-        keep_list_notes,
+        agent_google_list_notes_or_tasks,
         name="google_list_notes_or_tasks",
         description="List all notes and tasks from Google Keep and Google Tasks cloud. Shows active and completed items.",
     ),
     StructuredTool.from_function(
-        tasks_complete_task,
+        agent_google_complete_task,
         name="google_complete_task",
         description="Mark a task as completed in Google Tasks.",
     ),
     StructuredTool.from_function(
-        keep_delete_note,
+        agent_google_delete_note,
         name="google_delete_note_or_task",
         description="Delete a note or task from Google Keep or Google Tasks.",
     ),
@@ -90,17 +145,14 @@ TASK_NOTES_PROMPT = (
     "You are the Task & Notes Specialist Agent.\n"
     "You support both Google Workspace Cloud Notes (Google Keep / Tasks) and local storage.\n\n"
     "ROUTING & PREFERENCE RULES:\n"
-    "1. When the user asks to save, view, complete, or manage notes or tasks:\n"
-    "   - By default, PREFER saving to Google Cloud using `google_create_note_or_task` or `google_list_notes_or_tasks` "
-    "so the user can access their notes across Google Keep, Google Calendar, and mobile devices.\n"
-    "   - If the Google tool indicates authentication is needed or if the user explicitly specifies 'local', "
-    "use the local storage tools (`local_save_note`, `local_add_todo`, etc.).\n\n"
-    "CRITICAL NOTE EXTRACTION RULES:\n"
-    "1. When the user asks to save or record a note or task:\n"
-    "   - Extract and save ONLY the specific content the user explicitly asked to note down "
-    "(e.g., 'remind me to buy groceries tomorrow' -> title='Buy groceries', due_date='tomorrow').\n"
-    "   - NEVER include unrelated context, weather forecasts, or conversational filler inside the note.\n"
-    "2. Always provide your final response in clear, concise English confirming the exact action taken."
+    "1. When the user asks to view, show, list, save, or complete notes or tasks:\n"
+    "   - First try `google_list_notes_or_tasks` or `google_create_note_or_task`.\n"
+    "   - If no notes are found in Google Workspace or if Google is not connected, also check `local_read_notes` or `local_list_todos`.\n"
+    "   - If the user explicitly asks for 'local' or 'disk', use the local storage tools.\n\n"
+    "CRITICAL FORMATTING & EXTRACTION:\n"
+    "1. When showing notes, format them clearly with bullet points, titles, and dates.\n"
+    "2. When saving a note, extract ONLY the specific item the user asked to record.\n"
+    "3. Never dump raw system/error messages. Always provide a clear, polite final response in plain English."
 )
 
 task_notes_agent = create_react_agent(llm, task_notes_tools, prompt=TASK_NOTES_PROMPT)
