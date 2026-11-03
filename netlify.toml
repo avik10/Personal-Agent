@@ -1,0 +1,32 @@
+# ==============================================================================
+# Netlify Configuration for Personal AI Agent Studio
+# ==============================================================================
+
+[build]
+  # Base directory for frontend build
+  base = "frontend"
+  # Directory to publish (relative to base)
+  publish = "dist"
+  # Production build command
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# ------------------------------------------------------------------------------
+# Redirects & Rewrites
+# ------------------------------------------------------------------------------
+
+# API Reverse Proxy to Render Backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://ai-itik.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA client-side routing fallback (all unmatched paths route to index.html)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

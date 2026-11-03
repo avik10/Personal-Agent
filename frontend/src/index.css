@@ -1,0 +1,178 @@
+/* Modern Gemini & ChatGPT aesthetic styling */
+:root {
+  --bg-primary: #0e0e11;
+  --bg-secondary: #16161b;
+  --bg-tertiary: #1f1f26;
+  --bg-hover: #272732;
+  --bg-card: rgba(26, 26, 33, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(147, 51, 234, 0.4);
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --accent-purple: #8b5cf6;
+  --accent-blue: #3b82f6;
+  --accent-pink: #ec4899;
+  --accent-gradient: linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #ec4899 100%);
+  --gemini-gradient: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Gemini Glowing Text */
+.gradient-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gemini-text {
+  background: var(--gemini-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Floating Input Box with Focus Glow */
+.gemini-input-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gemini-input-container:focus-within {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2), 0 12px 40px rgba(139, 92, 246, 0.15);
+}
+
+/* Message Markdown typography */
+.prose {
+  line-height: 1.65;
+  font-size: 0.96rem;
+}
+.prose p {
+  margin-bottom: 0.85rem;
+}
+.prose p:last-child {
+  margin-bottom: 0;
+}
+.prose ul, .prose ol {
+  margin-left: 1.4rem;
+  margin-bottom: 0.85rem;
+}
+.prose li {
+  margin-bottom: 0.25rem;
+}
+.prose code {
+  font-family: var(--font-mono);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  font-size: 0.88em;
+}
+.prose pre {
+  background: #141418;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.85rem 0;
+}
+.prose pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.prose th, .prose td {
+  border: 1px solid var(--border-subtle);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.prose th {
+  background: rgba(255, 255, 255, 0.04);
+}
+.prose blockquote {
+  border-left: 3px solid var(--accent-purple);
+  padding-left: 1rem;
+  color: var(--text-secondary);
+  margin: 0.85rem 0;
+}
+
+/* Animations */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+@keyframes spin-smooth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin-smooth {
+  animation: spin-smooth 3s linear infinite;
+}
+
+@keyframes wave-bar {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+@keyframes shimmer-glow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-active {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(168,85,247,0.15) 50%, rgba(255,255,255,0.03) 100%);
+  background-size: 200% 100%;
+  animation: shimmer-glow 2.5s infinite linear;
+}
