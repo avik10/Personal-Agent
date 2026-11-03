@@ -56,9 +56,6 @@ DEFAULT_SCOPES = [
     "https://www.googleapis.com/auth/drive",
     # Docs: read and edit Google Docs
     "https://www.googleapis.com/auth/documents",
-    # Tasks: read, create, and complete tasks
+    # Tasks: read, create, and complete tasks & notes
     "https://www.googleapis.com/auth/tasks",
-    # Keep: read, create, and delete notes
-    "https://www.googleapis.com/auth/keep",
-    "https://www.googleapis.com/auth/keep.readonly",
 ]
