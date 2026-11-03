@@ -41,7 +41,8 @@ def get_groq_llm(
     model: Optional[str] = None,
     api_key: Optional[str] = None,
     temperature: Optional[float] = None,
-    max_retries: int = 2,
+    max_tokens: Optional[int] = None,
+    max_retries: int = 3,
 ) -> ChatGroq:
     """Instantiate and return a configured ChatGroq instance for agents.
 
@@ -64,11 +65,13 @@ def get_groq_llm(
 
     selected_model = (model or GROQ_MODEL or os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")).strip()
     temp = temperature if temperature is not None else TEMPERATURE
+    tok = max_tokens if max_tokens is not None else int(os.getenv("GROQ_MAX_TOKENS", "800"))
 
     return ChatGroq(
         groq_api_key=key,
         model_name=selected_model,
         temperature=temp,
+        max_tokens=tok,
         max_retries=max_retries,
     )
 
