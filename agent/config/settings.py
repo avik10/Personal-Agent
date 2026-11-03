@@ -54,7 +54,7 @@ TEMPERATURE = float(os.getenv("TEMPERATURE", "0.8"))
 # Groq Cloud API Configuration (for 24/7 cloud deployment)
 # Get a free key at https://console.groq.com/keys
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 
 # OpenWeatherMap API Configuration
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")

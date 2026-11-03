@@ -5,7 +5,7 @@ Enables running the multi-agent studio 24/7 in cloud environments (Render, Railw
 without requiring local hardware or local Ollama daemons.
 
 Supported Production Models on Groq:
-- 'llama-3.3-70b-versatile' (Recommended: 128k context, high intelligence & tool calling)
+- 'qwen/qwen3.8-27b' (Recommended: 128k context, high intelligence & tool calling)
 - 'llama-3.1-8b-instant'    (Ultra-low latency, blazing fast)
 - 'mixtral-8x7b-32768'      (MoE architecture, 32k context)
 """
@@ -31,7 +31,7 @@ from config.settings import (
 
 # Recommended production models available on Groq
 GROQ_RECOMMENDED_MODELS: Dict[str, str] = {
-    "llama-3.3-70b-versatile": "Default production model: 128k context, state-of-the-art reasoning and tool calling",
+    "qwen/qwen3.8-27b": "Default production model: 128k context, state-of-the-art reasoning and tool calling",
     "llama-3.1-8b-instant": "Lightweight model: ultra-fast responses, ideal for low-latency tasks",
     "mixtral-8x7b-32768": "Mixture-of-Experts: 32k context, robust multi-task performance",
 }
@@ -46,7 +46,7 @@ def get_groq_llm(
     """Instantiate and return a configured ChatGroq instance for agents.
 
     Args:
-        model: Groq model identifier (defaults to GROQ_MODEL or 'llama-3.3-70b-versatile').
+        model: Groq model identifier (defaults to GROQ_MODEL or 'qwen/qwen3.8-27b').
         api_key: Groq API key (defaults to GROQ_API_KEY from environment/.env).
         temperature: Sampling temperature (defaults to settings.TEMPERATURE).
         max_retries: Number of retries on transient network/rate-limit issues.
@@ -62,7 +62,7 @@ def get_groq_llm(
             "Get your free API key at: https://console.groq.com/keys"
         )
 
-    selected_model = (model or GROQ_MODEL or os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")).strip()
+    selected_model = (model or GROQ_MODEL or os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")).strip()
     temp = temperature if temperature is not None else TEMPERATURE
 
     return ChatGroq(
