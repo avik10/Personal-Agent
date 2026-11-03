@@ -310,16 +310,27 @@ def google_node(state: MultiAgentState) -> Dict:
 def general_node(state: MultiAgentState) -> Dict:
     """Execute General Dialogue Agent for non-tool conversations and greetings."""
     sub_task = state.get("agent_tasks", {}).get("general") or state.get("user_query", "")
+    prompt = (
+        f"You are a friendly, helpful AI Personal Assistant.\n"
+        f"User message: {sub_task}\n"
+        f"Reply conversationally, briefly, and strictly in English."
+    )
     try:
-        prompt = (
-            f"You are a friendly, helpful AI Personal Assistant.\n"
-            f"User message: {sub_task}\n"
-            f"Reply conversationally, briefly, and strictly in English."
-        )
         res = llm.invoke(prompt)
         output = clean_agent_output(res.content)
     except Exception as e:
-        output = f"Error generating response: {e}"
+        # If connection failed (e.g. Ollama refused connection) and Groq is available:
+        from config.settings import GROQ_API_KEY
+        if GROQ_API_KEY:
+            try:
+                from agents.groq_llm import get_groq_llm
+                cloud_llm = get_groq_llm()
+                res = cloud_llm.invoke(prompt)
+                output = clean_agent_output(res.content)
+            except Exception as fe:
+                output = f"Error generating response: {fe}"
+        else:
+            output = f"Error generating response: {e}"
     return {"agent_outputs": {"GeneralAgent": output}}
 
 

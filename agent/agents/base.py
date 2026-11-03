@@ -1,8 +1,5 @@
 """Base LLM configuration and output sanitization for all agents."""
 
-import re
-"""Base LLM configuration and output sanitization for all agents."""
-
 import os
 import re
 import logging
@@ -13,6 +10,7 @@ from config.settings import (
     TEMPERATURE,
     GROQ_API_KEY,
     GROQ_MODEL,
+    IS_CLOUD_ENV,
 )
 
 logger = logging.getLogger("agent.base")
@@ -20,15 +18,36 @@ logger = logging.getLogger("agent.base")
 
 def _init_llm():
     """Initialize primary LLM: Groq for 24/7 cloud production, or Ollama for local dev."""
-    # If Groq is explicitly chosen or if GROQ_API_KEY is present without Ollama
-    if LLM_PROVIDER == "groq" or (GROQ_API_KEY and LLM_PROVIDER != "ollama"):
+    # 1. Use Groq Cloud if provider is 'groq', or if running in cloud, or if GROQ_API_KEY is available
+    if LLM_PROVIDER == "groq" or (GROQ_API_KEY and IS_CLOUD_ENV):
+        try:
+            from agents.groq_llm import get_groq_llm
+            logger.info("Initializing Groq Cloud LLM with model: %s", GROQ_MODEL)
+            return get_groq_llm()
+        except Exception as e:
+            logger.warning("Failed to initialize Groq LLM: %s. Attempting fallback.", e)
+
+    # 2. Local Ollama attempt
+    if not IS_CLOUD_ENV:
+        try:
+            from langchain_ollama import ChatOllama
+            return ChatOllama(
+                model=MODEL_NAME,
+                base_url=OLLAMA_BASE_URL,
+                temperature=TEMPERATURE,
+            )
+        except Exception as e:
+            logger.warning("Local Ollama initialization failed: %s", e)
+
+    # 3. Cloud/Fallback to Groq if GROQ_API_KEY is present
+    if GROQ_API_KEY:
         try:
             from agents.groq_llm import get_groq_llm
             return get_groq_llm()
         except Exception as e:
-            logger.warning("Failed to initialize Groq LLM: %s. Falling back to Ollama.", e)
+            logger.error("Failed to initialize fallback Groq LLM: %s", e)
 
-    # Default to local Ollama
+    # 4. Final fallback to ChatOllama
     from langchain_ollama import ChatOllama
     return ChatOllama(
         model=MODEL_NAME,

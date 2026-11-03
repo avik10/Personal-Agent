@@ -43,18 +43,42 @@ KNOWLEDGE_FILE = STORAGE_DIR / "knowledge.json"
 INSTRUCTIONS_DIR = AGENT_DIR / "instructions"
 INSTRUCTIONS_FILE = INSTRUCTIONS_DIR / "instructions.md"
 
-# LLM Provider Configuration ('ollama' for local development, 'groq' for 24/7 cloud production)
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+# Groq Cloud API Configuration (for 24/7 cloud deployment)
+# Get a free key at https://console.groq.com/keys
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b").strip()
+GROQ_MAX_TOKENS = int(os.getenv("GROQ_MAX_TOKENS", "800"))
 
 # Ollama LLM Configuration (Local Mode)
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 MODEL_NAME = os.getenv("MODEL_NAME", "qwen3.5:8b")
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.8"))
 
-# Groq Cloud API Configuration (for 24/7 cloud deployment)
-# Get a free key at https://console.groq.com/keys
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
+# Detection of Cloud Deployment (Render, Railway, Fly, Heroku, etc.)
+IS_CLOUD_ENV = bool(
+    os.getenv("RENDER")
+    or os.getenv("RENDER_SERVICE_ID")
+    or os.getenv("PORT")
+    or os.getenv("DYNO")
+    or os.getenv("RAILWAY_ENVIRONMENT")
+    or os.getenv("FLY_APP_NAME")
+)
+
+# LLM Provider Resolution ('ollama' for local development, 'groq' for cloud production)
+# Auto-detect Groq when GROQ_API_KEY is configured or running on cloud platforms (e.g. Render)
+raw_provider = os.getenv("LLM_PROVIDER", "").lower().strip()
+if raw_provider == "groq":
+    LLM_PROVIDER = "groq"
+elif raw_provider == "ollama":
+    # If explicitly requested ollama, but we're in cloud container where localhost:11434 does not exist:
+    if IS_CLOUD_ENV and GROQ_API_KEY:
+        LLM_PROVIDER = "groq"
+    else:
+        LLM_PROVIDER = "ollama"
+elif GROQ_API_KEY or IS_CLOUD_ENV:
+    LLM_PROVIDER = "groq"
+else:
+    LLM_PROVIDER = "ollama"
 
 # OpenWeatherMap API Configuration
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")

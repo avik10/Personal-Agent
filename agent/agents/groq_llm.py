@@ -5,7 +5,7 @@ Enables running the multi-agent studio 24/7 in cloud environments (Render, Railw
 without requiring local hardware or local Ollama daemons.
 
 Supported Production Models on Groq:
-- 'qwen/qwen3.8-27b' (Recommended: 128k context, high intelligence & tool calling)
+- 'llama-3.3-70b-versatile' (Recommended: 128k context, high intelligence & tool calling)
 - 'llama-3.1-8b-instant'    (Ultra-low latency, blazing fast)
 - 'mixtral-8x7b-32768'      (MoE architecture, 32k context)
 """
@@ -31,9 +31,9 @@ from config.settings import (
 
 # Recommended production models available on Groq
 GROQ_RECOMMENDED_MODELS: Dict[str, str] = {
-    "qwen/qwen3.8-27b": "Default production model: 128k context, state-of-the-art reasoning and tool calling",
-    "llama-3.1-8b-instant": "Lightweight model: ultra-fast responses, ideal for low-latency tasks",
-    "mixtral-8x7b-32768": "Mixture-of-Experts: 32k context, robust multi-task performance",
+    "qwen/qwen3.8-27b": "Default production model: 27B parameters, excellent reasoning and tool calling",
+    "openai/gpt-oss-120b": "Large model: 120B parameters, deep contextual comprehension",
+    "openai/gpt-oss-20b": "Lightweight model: ultra-fast responses, ideal for low-latency tasks",
 }
 
 
@@ -50,6 +50,7 @@ def get_groq_llm(
         model: Groq model identifier (defaults to GROQ_MODEL or 'qwen/qwen3.8-27b').
         api_key: Groq API key (defaults to GROQ_API_KEY from environment/.env).
         temperature: Sampling temperature (defaults to settings.TEMPERATURE).
+        max_tokens: Maximum completion output tokens (defaults to 800 to avoid OTPM rate limits).
         max_retries: Number of retries on transient network/rate-limit issues.
 
     Returns:

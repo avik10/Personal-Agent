@@ -1,10 +1,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
-.env
 .env.*
+!.env.example
 .DS_Store
-frontend/dist/*
+
 # Persistent storage runtime data
 storage/*.log
 *.log

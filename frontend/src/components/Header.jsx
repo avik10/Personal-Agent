@@ -6,7 +6,7 @@ export default function Header({
   systemStatus,
   activeView
 }) {
-  const modelName = systemStatus?.backend_model || 'Qwen 3.5:8b';
+  const modelName = systemStatus?.backend_model || 'qwen/qwen3.8-27b';
 
   return (
     <header
