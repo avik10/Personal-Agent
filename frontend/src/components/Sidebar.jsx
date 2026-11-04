@@ -26,6 +26,7 @@ export default function Sidebar({
   activeView,
   setActiveView,
   setActiveGoogleTab,
+  setActiveMicrosoftTab,
   chats,
   currentChatId,
   onSelectChat,
@@ -33,11 +34,18 @@ export default function Sidebar({
   onDeleteChat
 }) {
   const [googleFolderExpanded, setGoogleFolderExpanded] = useState(true);
+  const [microsoftFolderExpanded, setMicrosoftFolderExpanded] = useState(true);
   const [capabilitiesExpanded, setCapabilitiesExpanded] = useState(true);
 
   const handleSelectGoogleTab = (tab) => {
     setActiveView('google');
     if (setActiveGoogleTab) setActiveGoogleTab(tab);
+    if (onClose) onClose();
+  };
+
+  const handleSelectMicrosoftTab = (tab) => {
+    setActiveView('microsoft');
+    if (setActiveMicrosoftTab) setActiveMicrosoftTab(tab);
     if (onClose) onClose();
   };
 
@@ -49,6 +57,14 @@ export default function Sidebar({
       icon: <Mail size={13} color="#f87171" />,
       color: '#f87171',
       bg: 'rgba(239, 68, 68, 0.1)',
+    },
+    {
+      name: 'Outlook MCP',
+      tag: 'Microsoft 365',
+      desc: 'Live mailbox search, unread fetch, compose & send via Graph MCP',
+      icon: <Mail size={13} color="#0078d4" />,
+      color: '#0078d4',
+      bg: 'rgba(0, 120, 212, 0.1)',
     },
     {
       name: 'Calendar MCP',
@@ -359,6 +375,96 @@ export default function Sidebar({
                 >
                   <CheckSquare size={12} />
                   <span>Notes & Tasks</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Microsoft Bucket Folder */}
+          <div
+            style={{
+              borderRadius: '10px',
+              background: activeView === 'microsoft' ? 'rgba(0, 120, 212, 0.1)' : 'transparent',
+              border: activeView === 'microsoft' ? '1px solid rgba(0, 120, 212, 0.3)' : '1px solid transparent',
+              overflow: 'hidden',
+              transition: 'all 0.15s',
+            }}
+          >
+            <div
+              onClick={() => {
+                setActiveView('microsoft');
+                if (onClose) onClose();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                cursor: 'pointer',
+                color: activeView === 'microsoft' ? '#f3f4f6' : '#d1d5db',
+                fontSize: '13px',
+                fontWeight: activeView === 'microsoft' ? 600 : 500,
+              }}
+              onMouseEnter={(e) => {
+                if (activeView !== 'microsoft') e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                if (activeView !== 'microsoft') e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {microsoftFolderExpanded ? (
+                  <FolderOpen size={15} color="#0078d4" />
+                ) : (
+                  <Folder size={15} color="#0078d4" />
+                )}
+                <span>Microsoft Bucket</span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMicrosoftFolderExpanded(!microsoftFolderExpanded);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#9ca3af',
+                  padding: '2px',
+                  cursor: 'pointer',
+                }}
+              >
+                {microsoftFolderExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            </div>
+
+            {/* Folder Sub-items (Outlook) */}
+            {microsoftFolderExpanded && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '2px 8px 8px 24px',
+                  gap: '2px',
+                }}
+              >
+                <div
+                  onClick={() => handleSelectMicrosoftTab('outlook')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '5px 10px',
+                    borderRadius: '8px',
+                    color: '#60a5fa',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    background: 'rgba(0, 120, 212, 0.08)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0, 120, 212, 0.18)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0, 120, 212, 0.08)')}
+                >
+                  <Mail size={12} color="#0078d4" />
+                  <span>Outlook</span>
                 </div>
               </div>
             )}

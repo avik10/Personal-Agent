@@ -35,6 +35,10 @@ def decompose_query(user_query: str) -> Tuple[List[str], Dict[str, str]]:
         elif any(k in pl for k in ["habit", "streak", "workout", "gym", "water", "drank", "exercise", "hydration", "pushup"]):
             tasks["habit"] = (tasks.get("habit", "") + " " + p).strip()
 
+        # Microsoft Outlook & Services
+        elif any(k in pl for k in ["outlook", "microsoft mail", "hotmail", "live mail", "ms mail", "microsoft account", "microsoft mcp"]):
+            tasks["outlook"] = (tasks.get("outlook", "") + " " + p).strip()
+
         # Google Workspace & Services (Sending emails, Gmail, Calendar, Drive, Docs, Tasks, Account)
         elif (
             any(k in pl for k in [
@@ -46,7 +50,7 @@ def decompose_query(user_query: str) -> Tuple[List[str], Dict[str, str]]:
                 "google task", "google tasks",
                 "google account", "google service", "google services", "google mcp", "connect to google"
             ])
-            and not any(k in pl for k in ["google search", "search google", "search the web"])
+            and not any(k in pl for k in ["google search", "search google", "search the web", "outlook", "hotmail"])
         ):
             tasks["google"] = (tasks.get("google", "") + " " + p).strip()
 

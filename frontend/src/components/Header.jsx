@@ -61,6 +61,24 @@ export default function Header({
               Google Workspace Bucket
             </span>
           </div>
+        ) : activeView === 'microsoft' ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                padding: '5px',
+                borderRadius: '8px',
+                background: 'rgba(0, 120, 212, 0.18)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Folder size={15} color="#0078d4" />
+            </div>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#f3f4f6' }}>
+              Microsoft Bucket
+            </span>
+          </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#f3f4f6' }}>

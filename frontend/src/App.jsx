@@ -5,11 +5,13 @@ import ChatArea from './components/ChatArea';
 import InputBar from './components/InputBar';
 import GoogleHub from './features/google/GoogleHub';
 import GoogleConnectModal from './features/google/GoogleConnectModal';
+import MicrosoftHub from './features/microsoft/MicrosoftHub';
 import { API_BASE, getApiUrl } from './config/api';
 
 export default function App() {
-  const [activeView, setActiveView] = useState('chat'); // 'chat' | 'google'
-  const [activeGoogleTab, setActiveGoogleTab] = useState('gmail'); // 'gmail' | 'calendar' | 'drive'
+  const [activeView, setActiveView] = useState('chat'); // 'chat' | 'google' | 'microsoft'
+  const [activeGoogleTab, setActiveGoogleTab] = useState('gmail'); // 'gmail' | 'calendar' | 'drive' | 'notes'
+  const [activeMicrosoftTab, setActiveMicrosoftTab] = useState('outlook'); // 'outlook'
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [systemStatus, setSystemStatus] = useState(null);
@@ -68,6 +70,17 @@ export default function App() {
   useEffect(() => {
     loadStatus();
     const interval = setInterval(loadStatus, 15000);
+
+    // Detect OAuth callback redirects from Google or Microsoft
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('microsoft_auth') === 'success') {
+      setActiveView('microsoft');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (params.get('google_auth') === 'success') {
+      setActiveView('google');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     return () => clearInterval(interval);
   }, []);
 
@@ -190,6 +203,11 @@ export default function App() {
     handleSendMessage(prompt);
   };
 
+  const handleAskAgentFromMicrosoft = (prompt) => {
+    setActiveView('chat');
+    handleSendMessage(prompt);
+  };
+
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       {/* Sidebar */}
@@ -200,6 +218,8 @@ export default function App() {
         setActiveView={setActiveView}
         activeGoogleTab={activeGoogleTab}
         setActiveGoogleTab={setActiveGoogleTab}
+        activeMicrosoftTab={activeMicrosoftTab}
+        setActiveMicrosoftTab={setActiveMicrosoftTab}
         onOpenConnectModal={() => setIsConnectModalOpen(true)}
         systemStatus={systemStatus}
         agentsList={agentsList}
@@ -236,7 +256,7 @@ export default function App() {
           onOpenConnectModal={() => setIsConnectModalOpen(true)}
         />
 
-        {/* Dynamic View: Chat Studio vs Google Workspace Bucket */}
+        {/* Dynamic View: Chat Studio vs Google Workspace Bucket vs Microsoft Bucket */}
         {activeView === 'chat' ? (
           <>
             <ChatArea
@@ -255,7 +275,7 @@ export default function App() {
               isLoading={isLoading}
             />
           </>
-        ) : (
+        ) : activeView === 'google' ? (
           <GoogleHub
             systemStatus={systemStatus}
             onRefreshStatus={loadStatus}
@@ -263,6 +283,15 @@ export default function App() {
             onNavigateChat={() => setActiveView('chat')}
             activeTab={activeGoogleTab}
             setActiveTab={setActiveGoogleTab}
+          />
+        ) : (
+          <MicrosoftHub
+            systemStatus={systemStatus}
+            onRefreshStatus={loadStatus}
+            onAskAgent={handleAskAgentFromMicrosoft}
+            onNavigateChat={() => setActiveView('chat')}
+            activeTab={activeMicrosoftTab}
+            setActiveTab={setActiveMicrosoftTab}
           />
         )}
       </div>

@@ -32,6 +32,7 @@ from agents import (
     dev_agent,
     knowledge_agent,
     google_agent,
+    outlook_agent,
 )
 import json
 import re
@@ -307,6 +308,17 @@ def google_node(state: MultiAgentState) -> Dict:
     return {"agent_outputs": {"GoogleAgent": output}}
 
 
+def outlook_node(state: MultiAgentState) -> Dict:
+    """Execute Microsoft Outlook Specialist Agent (powered by MCP)."""
+    sub_task = state.get("agent_tasks", {}).get("outlook") or state.get("user_query", "")
+    try:
+        res = outlook_agent.invoke({"messages": [HumanMessage(content=sub_task)]})
+        output = _extract_last_content(res.get("messages", []))
+    except Exception as e:
+        output = f"Microsoft Outlook operation encountered an error: {e}"
+    return {"agent_outputs": {"OutlookAgent": output}}
+
+
 def general_node(state: MultiAgentState) -> Dict:
     """Execute General Dialogue Agent for non-tool conversations and greetings."""
     sub_task = state.get("agent_tasks", {}).get("general") or state.get("user_query", "")
@@ -389,6 +401,7 @@ workflow = StateGraph(MultiAgentState)
 workflow.add_node("supervisor", supervisor_node)
 workflow.add_node("weather", weather_node)
 workflow.add_node("google", google_node)
+workflow.add_node("outlook", outlook_node)
 workflow.add_node("task_notes", task_notes_node)
 workflow.add_node("utility", utility_node)
 workflow.add_node("research", research_node)
@@ -407,6 +420,7 @@ workflow.add_edge(START, "supervisor")
 all_specialists = [
     "weather",
     "google",
+    "outlook",
     "task_notes",
     "utility",
     "research",

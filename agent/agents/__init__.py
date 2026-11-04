@@ -13,6 +13,7 @@ from .drafting_agent import drafting_agent
 from .dev_agent import dev_agent
 from .knowledge_agent import knowledge_agent
 from .google_agent import google_agent
+from .outlook_agent import outlook_agent
 
 __all__ = [
     "llm",
@@ -29,4 +30,5 @@ __all__ = [
     "dev_agent",
     "knowledge_agent",
     "google_agent",
+    "outlook_agent",
 ]

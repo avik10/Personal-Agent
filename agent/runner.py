@@ -1,7 +1,8 @@
 """Personal AI Assistant - Agent CLI Runner.
 
-Orchestrates 12 specialized agents concurrently:
+Orchestrates 13 specialized agents concurrently:
 - GoogleAgent: Real-time Google Workspace data (Gmail, Calendar, Drive, Docs, Tasks) via MCP.
+- OutlookAgent: Real-time Microsoft Outlook data (Mailbox, Search, Send, Read/Unread) via Microsoft Graph MCP.
 - WeatherAgent: Real-time weather and 5-day forecasts via OpenWeatherMap.
 - TaskNotesAgent: Scoped note-taking, to-dos, and reminder management.
 - UtilityAgent: Computations, unit conversions, time, system status, file inspection.

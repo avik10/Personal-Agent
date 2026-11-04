@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .routes import status_router, google_router, chat_router
+from .routes import status_router, google_router, outlook_router, chat_router
 
 app = FastAPI(
     title="Personal AI Agent Backend",
@@ -26,6 +26,7 @@ app.add_middleware(
 # Register route modules
 app.include_router(status_router)
 app.include_router(google_router)
+app.include_router(outlook_router)
 app.include_router(chat_router)
 
 # Locate frontend dist directory

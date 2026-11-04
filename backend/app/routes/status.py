@@ -2,22 +2,32 @@
 
 from fastapi import APIRouter
 from agent.config.settings import MODEL_NAME, LLM_PROVIDER, GROQ_MODEL
-from agent.mcp_google.auth import is_authenticated, get_account_info
+from agent.mcp_google.auth import is_authenticated as is_google_authenticated, get_account_info as get_google_account_info
+from agent.mcp_outlook.auth import is_authenticated as is_microsoft_authenticated, get_account_info as get_microsoft_account_info
 
 router = APIRouter(tags=["Status"])
 
 
 @router.get("/api/status")
 def get_system_status():
-    """Retrieve health and connectivity status of the agent and Google Workspace."""
-    google_auth = is_authenticated()
+    """Retrieve health and connectivity status of the agent, Google Workspace, and Microsoft Outlook."""
+    google_auth = is_google_authenticated()
     google_email = "Not authenticated"
     if google_auth:
         try:
-            info = get_account_info()
+            info = get_google_account_info()
             google_email = info.get("emailAddress", "Connected")
         except Exception:
             google_email = "Connected"
+
+    ms_auth = is_microsoft_authenticated()
+    ms_email = "Not authenticated"
+    if ms_auth:
+        try:
+            ms_info = get_microsoft_account_info()
+            ms_email = ms_info.get("email", "Connected")
+        except Exception:
+            ms_email = "Connected"
 
     active_model = f"{GROQ_MODEL} (Groq Cloud)" if LLM_PROVIDER == "groq" else MODEL_NAME
 
@@ -25,7 +35,7 @@ def get_system_status():
         "status": "online",
         "backend_model": active_model,
         "llm_provider": LLM_PROVIDER,
-        "agents_count": 12,
+        "agents_count": 13,
         "google": {
             "authenticated": google_auth,
             "email": google_email,
@@ -35,6 +45,13 @@ def get_system_status():
                 "Google Drive",
                 "Google Docs",
                 "Google Tasks",
+            ],
+        },
+        "microsoft": {
+            "authenticated": ms_auth,
+            "email": ms_email,
+            "connected_services": [
+                "Outlook Mail",
             ],
         },
     }
@@ -49,6 +66,13 @@ def get_agents():
                 "id": "google",
                 "name": "Google Workspace Agent",
                 "description": "Real data from Gmail, Calendar, Drive, Docs, and Tasks via MCP",
+                "icon": "mail",
+                "tag": "MCP Integrated",
+            },
+            {
+                "id": "outlook",
+                "name": "Microsoft Outlook Agent",
+                "description": "Real data from Microsoft Outlook mailbox, search & sending via Microsoft Graph MCP",
                 "icon": "mail",
                 "tag": "MCP Integrated",
             },
