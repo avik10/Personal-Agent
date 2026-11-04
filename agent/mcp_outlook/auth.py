@@ -196,6 +196,25 @@ class BearerAuth(httpx.Auth):
         yield request
 
 
+def get_graph_client(token: str, timeout: float = 20.0) -> httpx.Client:
+    """Create an HTTP client configured for Microsoft Graph API.
+
+    Guarantees Authorization Bearer header is preserved across cross-domain redirects
+    (e.g., from graph.microsoft.com to regional Outlook cluster endpoints).
+    """
+    clean_tok = (token or "").strip()
+
+    def _inject_bearer(req: httpx.Request):
+        if clean_tok:
+            req.headers["Authorization"] = f"Bearer {clean_tok}"
+
+    return httpx.Client(
+        timeout=timeout,
+        follow_redirects=True,
+        event_hooks={"request": [_inject_bearer]},
+    )
+
+
 def get_account_info() -> Dict[str, Any]:
     """Retrieve profile and mailbox details for the authenticated Microsoft user."""
     token = get_access_token()
@@ -205,8 +224,8 @@ def get_account_info() -> Dict[str, Any]:
     clean_tok = token.strip()
     profile: Dict[str, Any] = {}
 
-    with httpx.Client(timeout=15.0, follow_redirects=True) as client:
-        res = client.get(f"{GRAPH_BASE_URL}/me", auth=BearerAuth(clean_tok))
+    with get_graph_client(clean_tok, timeout=15.0) as client:
+        res = client.get(f"{GRAPH_BASE_URL}/me")
         if res.status_code == 200:
             profile = res.json()
         elif res.status_code == 401:
@@ -219,9 +238,10 @@ def get_account_info() -> Dict[str, Any]:
                         new_toks = refresh_access_token(tok["refresh_token"])
                         new_tok_val = (new_toks.get("access_token") or "").strip()
                         if new_tok_val:
-                            res2 = client.get(f"{GRAPH_BASE_URL}/me", auth=BearerAuth(new_tok_val))
-                            if res2.status_code == 200:
-                                profile = res2.json()
+                            with get_graph_client(new_tok_val, timeout=15.0) as client2:
+                                res2 = client2.get(f"{GRAPH_BASE_URL}/me")
+                                if res2.status_code == 200:
+                                    profile = res2.json()
             except Exception as ref_err:
                 logger.warning("Token refresh inside get_account_info failed: %s", ref_err)
         else:

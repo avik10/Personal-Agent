@@ -4,7 +4,7 @@ import logging
 from typing import Any, Dict, List, Optional
 import httpx
 
-from ..auth import get_access_token, is_authenticated
+from ..auth import get_access_token, is_authenticated, get_graph_client
 from ..config import GRAPH_BASE_URL
 
 logger = logging.getLogger("mcp.outlook.services.mail")
@@ -60,8 +60,8 @@ def outlook_list_messages(
         headers = {
             "Prefer": 'outlook.body-content-type="text"',
         }
-        with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-            return client.get(target_url, headers=headers, params=target_params, auth=BearerAuth(clean_tok))
+        with get_graph_client(clean_tok, timeout=20.0) as client:
+            return client.get(target_url, headers=headers, params=target_params)
 
     # Determine target URL: folder vs root messages
     clean_folder = (folder or "").strip().lower()
@@ -196,8 +196,8 @@ def outlook_get_message(message_id: str) -> Dict[str, Any]:
         raise RuntimeError("Access token is empty. Please reconnect your Microsoft account.")
 
     url = f"{GRAPH_BASE_URL}/me/messages/{message_id}"
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-        res = client.get(url, auth=BearerAuth(token))
+    with get_graph_client(token, timeout=20.0) as client:
+        res = client.get(url)
         if res.status_code != 200:
             raise RuntimeError(f"Outlook message not found or inaccessible: {res.text}")
 
@@ -265,8 +265,8 @@ def outlook_send_message(
     }
 
     url = f"{GRAPH_BASE_URL}/me/sendMail"
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-        res = client.post(url, headers=headers, json=payload, auth=BearerAuth(token))
+    with get_graph_client(token, timeout=20.0) as client:
+        res = client.post(url, headers=headers, json=payload)
         if res.status_code not in (200, 202):
             raise RuntimeError(f"Failed to send email via Outlook: {res.status_code} - {res.text}")
 
@@ -289,8 +289,8 @@ def outlook_mark_read(message_id: str, is_read: bool = True) -> Dict[str, Any]:
     }
 
     url = f"{GRAPH_BASE_URL}/me/messages/{message_id}"
-    with httpx.Client(timeout=15.0, follow_redirects=True) as client:
-        res = client.patch(url, headers=headers, json={"isRead": is_read}, auth=BearerAuth(token))
+    with get_graph_client(token, timeout=15.0) as client:
+        res = client.patch(url, headers=headers, json={"isRead": is_read})
         if res.status_code != 200:
             raise RuntimeError(f"Failed to update message read status: {res.text}")
 
@@ -304,8 +304,8 @@ def outlook_delete_message(message_id: str) -> Dict[str, Any]:
         raise RuntimeError("Access token is empty. Please reconnect your Microsoft account.")
 
     url = f"{GRAPH_BASE_URL}/me/messages/{message_id}"
-    with httpx.Client(timeout=15.0, follow_redirects=True) as client:
-        res = client.delete(url, auth=BearerAuth(token))
+    with get_graph_client(token, timeout=15.0) as client:
+        res = client.delete(url)
         if res.status_code not in (200, 204):
             raise RuntimeError(f"Failed to delete Outlook message: {res.text}")
 
@@ -328,8 +328,8 @@ def outlook_list_folders() -> List[Dict[str, Any]]:
     url = f"{GRAPH_BASE_URL}/me/mailFolders"
     params = {"$top": 50}
 
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-        res = client.get(url, params=params, auth=BearerAuth(token))
+    with get_graph_client(token, timeout=20.0) as client:
+        res = client.get(url, params=params)
         if res.status_code != 200:
             logger.error("Failed to list mail folders: %s - %s", res.status_code, res.text)
             return []
