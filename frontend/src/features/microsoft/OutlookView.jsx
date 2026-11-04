@@ -418,8 +418,90 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
             Loading Outlook emails via Microsoft Graph...
           </div>
         ) : emails.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
-            No emails found in Outlook {activeFolder}.
+          <div
+            style={{
+              padding: '48px 24px',
+              textAlign: 'center',
+              background: 'rgba(255, 255, 255, 0.02)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px',
+            }}
+          >
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: 'rgba(0, 120, 212, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Inbox size={20} color="#0078d4" />
+            </div>
+            <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#f3f4f6', margin: 0 }}>
+              No emails found in Outlook {activeFolder === 'all' ? 'Mailbox' : activeFolder}
+            </h4>
+            <p style={{ fontSize: '12px', color: '#9ca3af', maxWidth: '480px', margin: 0, lineHeight: 1.5 }}>
+              {userEmail?.includes('@gmail.com') || userEmail?.includes('@yahoo.com')
+                ? `You are connected with Microsoft identity (${userEmail}). Microsoft Outlook syncs messages from your Microsoft Exchange/Outlook mailbox (outlook.live.com), separate from Google Gmail. If you are looking for your Gmail inbox, visit Google Bucket > Gmail.`
+                : `Your Outlook ${activeFolder} is currently empty. Try switching folders or compose a new email.`}
+            </p>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+              {activeFolder !== 'all' && (
+                <button
+                  onClick={() => setActiveFolder('all')}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(0, 120, 212, 0.15)',
+                    border: '1px solid rgba(0, 120, 212, 0.3)',
+                    color: '#60a5fa',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  View All Mail
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setShowCompose(true);
+                  setSendStatus(null);
+                }}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #0078d4 0%, #0284c7 100%)',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Send Test Email
+              </button>
+              <button
+                onClick={fetchEmails}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#d1d5db',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Refresh
+              </button>
+            </div>
           </div>
         ) : (
           emails.map((msg) => {

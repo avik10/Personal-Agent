@@ -97,8 +97,25 @@ def outlook_list_messages(
         res = _execute_get(fallback_url, params, token)
 
     if res.status_code != 200:
-        logger.error("Failed to list Outlook messages: %s - %s", res.status_code, res.text)
-        return []
+        err_msg = ""
+        try:
+            err_data = res.json()
+            err_msg = err_data.get("error", {}).get("message", "")
+        except Exception:
+            err_msg = res.text
+
+        logger.error("Failed to list Outlook messages (%s): %s", res.status_code, err_msg or res.text)
+
+        if "MailboxNotEnabledForRESTAPI" in err_msg or "ResourceNotFound" in err_msg:
+            raise RuntimeError(
+                "Microsoft Outlook mailbox is not activated for this account. "
+                "If this Microsoft account was created using an external email (@gmail.com), "
+                "please visit https://outlook.live.com once to initialize your Outlook mailbox, or connect an @outlook.com / Office 365 account."
+            )
+        elif res.status_code in (401, 403):
+            raise RuntimeError(f"Microsoft access permission denied ({res.status_code}): {err_msg}. Please reconnect your account.")
+        else:
+            raise RuntimeError(f"Microsoft Graph API error ({res.status_code}): {err_msg or res.text}")
 
     raw_items = res.json().get("value", [])
 

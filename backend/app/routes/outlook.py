@@ -93,7 +93,7 @@ def get_outlook_auth_url(request: Request):
         auth_url = get_authorization_url(redirect_uri=redirect_uri)
         return {"url": auth_url, "redirect_uri": redirect_uri}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/auth/login")
@@ -204,7 +204,7 @@ async def list_outlook_messages(
             max_results=max_results,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/messages/{message_id}")
@@ -234,7 +234,7 @@ async def send_outlook_message(payload: SendEmailModel):
             is_html=getattr(payload, "is_html", False),
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/messages/{message_id}/read")
@@ -246,7 +246,7 @@ async def mark_outlook_message_read(message_id: str, is_read: bool = True):
     try:
         return await asyncio.to_thread(outlook_mark_read, message_id=message_id, is_read=is_read)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/messages/{message_id}")
@@ -258,4 +258,4 @@ async def delete_outlook_message(message_id: str):
     try:
         return await asyncio.to_thread(outlook_delete_message, message_id=message_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
