@@ -189,7 +189,7 @@ async def send_outlook_message(payload: SendEmailModel):
             to=payload.to,
             subject=payload.subject,
             body=payload.body,
-            is_html=payload.is_html,
+            is_html=getattr(payload, "is_html", False),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -19,6 +19,7 @@ class SendEmailModel(BaseModel):
     to: str = Field(..., description="Recipient email address")
     subject: str = Field(..., description="Email subject line")
     body: str = Field(..., description="Email message body")
+    is_html: bool = Field(False, description="Whether the email body is HTML")
 
 
 class CreateEventModel(BaseModel):
