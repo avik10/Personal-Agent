@@ -19,7 +19,7 @@ def outlook_list_messages(
     """List or search emails from Microsoft Outlook mailbox.
 
     Args:
-        folder: Folder name ('inbox', 'sentitems', 'drafts', 'archive', 'deleteditems').
+        folder: Folder name ('all', 'inbox', 'sentitems', 'drafts', 'archive', 'deleteditems').
         max_results: Maximum messages to return (default: 25).
         query: Optional search keyword to filter by sender, subject, or content.
         unread_only: If True, only returns unread emails.
@@ -40,13 +40,22 @@ def outlook_list_messages(
     if not token:
         return []
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Prefer": 'outlook.body-content-type="text"',
-    }
+    def _execute_get(target_url: str, target_params: dict, auth_token: str) -> httpx.Response:
+        headers = {
+            "Authorization": f"Bearer {auth_token}",
+            "Prefer": 'outlook.body-content-type="text"',
+        }
+        with httpx.Client(timeout=15.0) as client:
+            return client.get(target_url, headers=headers, params=target_params)
 
-    url = f"{GRAPH_BASE_URL}/me/mailFolders/{folder}/messages" if folder else f"{GRAPH_BASE_URL}/me/messages"
-    params = {
+    # Determine target URL: folder vs root messages
+    clean_folder = (folder or "").strip().lower()
+    if clean_folder in ("all", "allitems", "messages", ""):
+        url = f"{GRAPH_BASE_URL}/me/messages"
+    else:
+        url = f"{GRAPH_BASE_URL}/me/mailFolders/{clean_folder}/messages"
+
+    params: Dict[str, Any] = {
         "$top": min(max_results, 50),
         "$select": "id,subject,from,toRecipients,receivedDateTime,isRead,bodyPreview,body,hasAttachments,webLink,importance",
     }
@@ -55,53 +64,81 @@ def outlook_list_messages(
         params["$filter"] = "isRead eq false"
 
     if query and query.strip():
-        # Microsoft Graph $search requires KQL or keyword quotes
+        # Microsoft Graph $search requires KQL or keyword quotes and cannot be combined with $orderby
         params["$search"] = f'"{query.strip()}"'
-    else:
-        # $orderby cannot be combined with $search in Graph API
+    elif not unread_only:
+        # Microsoft Graph forbids $orderby when $filter is on a different property (like isRead)
         params["$orderby"] = "receivedDateTime desc"
 
-    with httpx.Client(timeout=15.0) as client:
-        res = client.get(url, headers=headers, params=params)
-        if res.status_code != 200:
-            if res.status_code in (401, 403):
-                from ..auth import disconnect
-                disconnect()
-            logger.error("Failed to list Outlook messages: %s - %s", res.status_code, res.text)
-            return []
+    res = _execute_get(url, params, token)
 
-        raw_items = res.json().get("value", [])
-        messages = []
-        for item in raw_items:
-            sender_obj = item.get("from", {}).get("emailAddress", {})
-            sender_name = sender_obj.get("name") or sender_obj.get("address") or "Unknown"
-            sender_email = sender_obj.get("address") or ""
+    # Auto-refresh token on 401 Unauthorized and retry once
+    if res.status_code == 401:
+        try:
+            from ..auth import refresh_access_token, TOKEN_PATH
+            import json
+            if TOKEN_PATH.exists():
+                with open(TOKEN_PATH, "r") as f:
+                    tok_data = json.load(f)
+                refresh_tok = tok_data.get("refresh_token")
+                if refresh_tok:
+                    new_tokens = refresh_access_token(refresh_tok)
+                    new_token = (new_tokens.get("access_token") or "").strip()
+                    if new_token:
+                        token = new_token
+                        res = _execute_get(url, params, token)
+        except Exception as ref_err:
+            logger.warning("Token refresh failed during list messages: %s", ref_err)
 
-            to_recipients = [
-                r.get("emailAddress", {}).get("address", "")
-                for r in item.get("toRecipients", [])
-                if r.get("emailAddress", {}).get("address")
-            ]
+    # If folder endpoint returned 404/400 (e.g. personal account folder mapping difference), fallback to /me/messages
+    if res.status_code in (400, 404) and clean_folder not in ("all", "allitems", "messages", ""):
+        logger.info("Folder '%s' query failed with %s; falling back to root /me/messages", clean_folder, res.status_code)
+        fallback_url = f"{GRAPH_BASE_URL}/me/messages"
+        res = _execute_get(fallback_url, params, token)
 
-            body_obj = item.get("body", {})
-            messages.append({
-                "id": item.get("id"),
-                "subject": item.get("subject") or "(No Subject)",
-                "from": sender_name,
-                "from_email": sender_email,
-                "to": to_recipients,
-                "receivedDateTime": item.get("receivedDateTime"),
-                "isRead": item.get("isRead", False),
-                "bodyPreview": item.get("bodyPreview") or "",
-                "body": body_obj.get("content") or item.get("bodyPreview") or "",
-                "bodyType": body_obj.get("contentType", "text"),
-                "hasAttachments": item.get("hasAttachments", False),
-                "importance": item.get("importance", "normal"),
-                "webLink": item.get("webLink", ""),
-                "source": "outlook",
-            })
+    if res.status_code != 200:
+        logger.error("Failed to list Outlook messages: %s - %s", res.status_code, res.text)
+        return []
 
-        return messages
+    raw_items = res.json().get("value", [])
+
+    # Sort messages locally by receivedDateTime descending for guaranteed ordering
+    try:
+        raw_items.sort(key=lambda x: x.get("receivedDateTime") or "", reverse=True)
+    except Exception:
+        pass
+
+    messages = []
+    for item in raw_items:
+        sender_obj = item.get("from", {}).get("emailAddress", {})
+        sender_name = sender_obj.get("name") or sender_obj.get("address") or "Unknown"
+        sender_email = sender_obj.get("address") or ""
+
+        to_recipients = [
+            r.get("emailAddress", {}).get("address", "")
+            for r in item.get("toRecipients", [])
+            if r.get("emailAddress", {}).get("address")
+        ]
+
+        body_obj = item.get("body", {})
+        messages.append({
+            "id": item.get("id"),
+            "subject": item.get("subject") or "(No Subject)",
+            "from": sender_name,
+            "from_email": sender_email,
+            "to": to_recipients,
+            "receivedDateTime": item.get("receivedDateTime"),
+            "isRead": item.get("isRead", False),
+            "bodyPreview": item.get("bodyPreview") or "",
+            "body": body_obj.get("content") or item.get("bodyPreview") or "",
+            "bodyType": body_obj.get("contentType", "text"),
+            "hasAttachments": item.get("hasAttachments", False),
+            "importance": item.get("importance", "normal"),
+            "webLink": item.get("webLink", ""),
+            "source": "outlook",
+        })
+
+    return messages
 
 
 def outlook_get_message(message_id: str) -> Dict[str, Any]:

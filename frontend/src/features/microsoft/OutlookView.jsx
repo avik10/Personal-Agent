@@ -21,6 +21,7 @@ import { getApiUrl } from '../../config/api';
 export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnected, userEmail }) {
   const [emails, setEmails] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -35,10 +36,13 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
   const fetchEmails = async () => {
     if (!isConnected) return;
     setIsLoading(true);
+    setFetchError(null);
     try {
       const params = new URLSearchParams();
-      params.append('folder', activeFolder);
-      params.append('max_results', '20');
+      if (activeFolder && activeFolder !== 'all') {
+        params.append('folder', activeFolder);
+      }
+      params.append('max_results', '25');
       if (unreadOnly) params.append('unread_only', 'true');
       if (searchQuery.trim()) params.append('query', searchQuery.trim());
 
@@ -46,9 +50,13 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
       if (res.ok) {
         const data = await res.json();
         setEmails(Array.isArray(data) ? data : []);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setFetchError(err.detail || `Failed to fetch Outlook emails (Status ${res.status})`);
       }
     } catch (err) {
       console.error('Failed to fetch Outlook emails:', err);
+      setFetchError(err.message || 'Network error fetching Outlook emails');
     } finally {
       setIsLoading(false);
     }
@@ -231,11 +239,13 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
         </form>
 
         {/* Folder Selectors */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {[
             { id: 'inbox', label: 'Inbox' },
+            { id: 'all', label: 'All Mail' },
             { id: 'sentitems', label: 'Sent' },
             { id: 'drafts', label: 'Drafts' },
+            { id: 'archive', label: 'Archive' },
           ].map((f) => (
             <button
               key={f.id}
@@ -296,6 +306,59 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
           </button>
         </div>
       </div>
+
+      {/* Error alert banner if fetch failed */}
+      {fetchError && isConnected && (
+        <div
+          style={{
+            padding: '12px 16px',
+            borderRadius: '12px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            color: '#fca5a5',
+            fontSize: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} color="#f87171" />
+            <span>{fetchError}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={fetchEmails}
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                color: '#fff',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                cursor: 'pointer',
+              }}
+            >
+              Retry
+            </button>
+            <button
+              onClick={onOpenConnectModal}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#fff',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                cursor: 'pointer',
+              }}
+            >
+              Check Auth
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Email List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

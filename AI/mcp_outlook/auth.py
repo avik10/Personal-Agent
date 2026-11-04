@@ -45,6 +45,23 @@ def get_authorization_url(redirect_uri: str, state: str = "outlook_auth") -> str
     return f"{AUTH_ENDPOINT}?{urllib.parse.urlencode(params)}"
 
 
+def _parse_id_token(id_token: str) -> Dict[str, Any]:
+    """Extract claims from JWT id_token payload without external dependencies."""
+    try:
+        import base64
+        parts = id_token.split(".")
+        if len(parts) >= 2:
+            payload_b64 = parts[1]
+            rem = len(payload_b64) % 4
+            if rem > 0:
+                payload_b64 += "=" * (4 - rem)
+            payload_json = base64.urlsafe_b64decode(payload_b64).decode("utf-8")
+            return json.loads(payload_json)
+    except Exception as e:
+        logger.debug("Could not parse id_token: %s", e)
+    return {}
+
+
 def exchange_code_for_token(code: str, redirect_uri: str) -> Dict[str, Any]:
     """Exchange authorization code for access and refresh tokens."""
     if not MICROSOFT_CLIENT_ID:
@@ -69,6 +86,16 @@ def exchange_code_for_token(code: str, redirect_uri: str) -> Dict[str, Any]:
         token_data = res.json()
         token_data["created_at"] = time.time()
         token_data["expires_at"] = time.time() + token_data.get("expires_in", 3600)
+
+        # Extract claims from id_token if available (provides real personal email)
+        if "id_token" in token_data:
+            claims = _parse_id_token(token_data["id_token"])
+            if claims.get("preferred_username"):
+                token_data["preferred_username"] = claims["preferred_username"]
+            if claims.get("email"):
+                token_data["email_claim"] = claims["email"]
+            if claims.get("name"):
+                token_data["name_claim"] = claims["name"]
 
         # Save to token storage
         TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -164,34 +191,69 @@ def get_account_info() -> Dict[str, Any]:
         raise MicrosoftAuthError("Access token is empty.")
 
     headers = {"Authorization": f"Bearer {token.strip()}"}
+    profile: Dict[str, Any] = {}
 
     with httpx.Client(timeout=10.0) as client:
         res = client.get(f"{GRAPH_BASE_URL}/me", headers=headers)
-        if res.status_code != 200:
-            if res.status_code in (401, 403):
-                # Clear invalid/corrupted token file
-                disconnect()
-            raise MicrosoftAuthError(f"Failed to fetch Microsoft profile: {res.text}")
+        if res.status_code == 200:
+            profile = res.json()
+        elif res.status_code == 401:
+            # Try refreshing token once
+            try:
+                if TOKEN_PATH.exists():
+                    with open(TOKEN_PATH, "r") as f:
+                        tok = json.load(f)
+                    if tok.get("refresh_token"):
+                        new_toks = refresh_access_token(tok["refresh_token"])
+                        new_tok_val = (new_toks.get("access_token") or "").strip()
+                        if new_tok_val:
+                            res2 = client.get(f"{GRAPH_BASE_URL}/me", headers={"Authorization": f"Bearer {new_tok_val}"})
+                            if res2.status_code == 200:
+                                profile = res2.json()
+            except Exception as ref_err:
+                logger.warning("Token refresh inside get_account_info failed: %s", ref_err)
+        else:
+            logger.warning("Microsoft Graph /me returned status %s: %s", res.status_code, res.text)
 
-        profile = res.json()
-        email = profile.get("mail") or profile.get("userPrincipalName") or ""
-        display_name = profile.get("displayName") or email.split("@")[0] or "Microsoft User"
+    # Multi-field fallback for personal accounts (@outlook.com, @hotmail.com, or custom Microsoft MSA)
+    email = (
+        profile.get("mail")
+        or profile.get("userPrincipalName")
+        or (profile.get("otherMails") and profile.get("otherMails")[0])
+        or ""
+    )
 
-        return {
-            "authenticated": True,
-            "email": email,
-            "displayName": display_name,
-            "id": profile.get("id"),
-            "status": "connected",
-        }
+    # Check cached token claims from OAuth if email is empty or internal ID format
+    cached_name = ""
+    if TOKEN_PATH.exists():
+        try:
+            with open(TOKEN_PATH, "r") as f:
+                tok_data = json.load(f)
+            cached_email = tok_data.get("preferred_username") or tok_data.get("email_claim")
+            cached_name = tok_data.get("name_claim") or ""
+            if not email or "@" not in email:
+                if cached_email:
+                    email = cached_email
+        except Exception:
+            pass
 
-        return {
-            "authenticated": True,
-            "email": email,
-            "displayName": display_name,
-            "id": profile.get("id"),
-            "status": "connected",
-        }
+    if not email and not profile:
+        raise MicrosoftAuthError("Failed to fetch Microsoft profile and no cached identity found.")
+
+    display_name = (
+        profile.get("displayName")
+        or cached_name
+        or (email.split("@")[0] if "@" in email else "")
+        or "Microsoft User"
+    )
+
+    return {
+        "authenticated": True,
+        "email": email,
+        "displayName": display_name,
+        "id": profile.get("id"),
+        "status": "connected",
+    }
 
 
 def disconnect() -> bool:

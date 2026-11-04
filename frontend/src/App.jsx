@@ -75,9 +75,11 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('microsoft_auth') === 'success') {
       setActiveView('microsoft');
+      loadStatus();
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (params.get('google_auth') === 'success') {
       setActiveView('google');
+      loadStatus();
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 

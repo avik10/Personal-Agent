@@ -23,15 +23,26 @@ export default function OutlookConnectModal({
 }) {
   const [copiedField, setCopiedField] = useState(null);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [activeRedirectUri, setActiveRedirectUri] = useState('');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      fetch(getApiUrl('/api/outlook/auth/url'))
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.redirect_uri) setActiveRedirectUri(data.redirect_uri);
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const isConnected = systemStatus?.microsoft?.authenticated;
   const userEmail = systemStatus?.microsoft?.email || 'Not connected';
 
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000';
   const backendBase = getApiUrl('').replace(/\/api$/, '');
-  const callbackUrl = `${backendBase}/api/outlook/auth/callback`;
+  const callbackUrl = activeRedirectUri || `${backendBase}/api/outlook/auth/callback`;
 
   const copyToClipboard = (text, fieldName) => {
     navigator.clipboard.writeText(text);

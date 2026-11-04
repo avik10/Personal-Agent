@@ -51,6 +51,30 @@ from ..schemas import SendEmailModel
 router = APIRouter(prefix="/api/outlook", tags=["Microsoft Outlook"])
 
 
+def get_outlook_redirect_uri(request: Request) -> str:
+    """Resolve redirect URI prioritizing configured MICROSOFT_REDIRECT_URI and respecting reverse proxy headers."""
+    configured_uri = os.getenv("MICROSOFT_REDIRECT_URI", "").strip()
+    host = request.headers.get("host", "").lower()
+    is_localhost = "localhost" in host or "127.0.0.1" in host or "testserver" in host
+
+    # If running locally, prefer local callback URI for seamless local testing
+    if is_localhost:
+        base_url = str(request.base_url).rstrip("/")
+        return f"{base_url}/api/outlook/auth/callback"
+
+    if configured_uri:
+        return configured_uri
+
+    # Forwarded headers (Render, reverse proxy)
+    proto = request.headers.get("x-forwarded-proto", "").lower()
+    f_host = request.headers.get("x-forwarded-host") or host
+    if proto and f_host:
+        return f"{proto}://{f_host}/api/outlook/auth/callback"
+
+    base_url = str(request.base_url).rstrip("/")
+    return f"{base_url}/api/outlook/auth/callback"
+
+
 @router.get("/auth/url")
 def get_outlook_auth_url(request: Request):
     """Generate the Microsoft OAuth 2.0 consent URL for web authorization."""
@@ -63,8 +87,7 @@ def get_outlook_auth_url(request: Request):
             ),
         )
 
-    base_url = str(request.base_url).rstrip("/")
-    redirect_uri = f"{base_url}/api/outlook/auth/callback"
+    redirect_uri = get_outlook_redirect_uri(request)
 
     try:
         auth_url = get_authorization_url(redirect_uri=redirect_uri)
@@ -82,8 +105,7 @@ def login_with_microsoft(request: Request):
             detail="MICROSOFT_CLIENT_ID is not configured. Register an application in Azure Portal.",
         )
 
-    base_url = str(request.base_url).rstrip("/")
-    redirect_uri = f"{base_url}/api/outlook/auth/callback"
+    redirect_uri = get_outlook_redirect_uri(request)
     auth_url = get_authorization_url(redirect_uri=redirect_uri)
     return RedirectResponse(url=auth_url)
 
@@ -111,8 +133,7 @@ def microsoft_auth_callback(
     if not code:
         raise HTTPException(status_code=400, detail="Missing authorization code from Microsoft.")
 
-    base_url = str(request.base_url).rstrip("/")
-    redirect_uri = f"{base_url}/api/outlook/auth/callback"
+    redirect_uri = get_outlook_redirect_uri(request)
 
     try:
         exchange_code_for_token(code=code, redirect_uri=redirect_uri)
