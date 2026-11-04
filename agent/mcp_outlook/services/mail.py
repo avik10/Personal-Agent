@@ -31,7 +31,15 @@ def outlook_list_messages(
         logger.info("Outlook is not authenticated. Returning empty message list.")
         return []
 
-    token = get_access_token()
+    try:
+        token = get_access_token().strip()
+    except Exception as e:
+        logger.info("Could not retrieve valid access token: %s", e)
+        return []
+
+    if not token:
+        return []
+
     headers = {
         "Authorization": f"Bearer {token}",
         "Prefer": 'outlook.body-content-type="text"',
@@ -56,6 +64,9 @@ def outlook_list_messages(
     with httpx.Client(timeout=15.0) as client:
         res = client.get(url, headers=headers, params=params)
         if res.status_code != 200:
+            if res.status_code in (401, 403):
+                from ..auth import disconnect
+                disconnect()
             logger.error("Failed to list Outlook messages: %s - %s", res.status_code, res.text)
             return []
 

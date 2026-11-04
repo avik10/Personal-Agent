@@ -32,7 +32,7 @@ def mcp_outlook_account_info() -> str:
         info = get_account_info()
         return f"Microsoft Outlook Connected: {info.get('email')} ({info.get('displayName')})"
     except Exception as e:
-        return f"Error retrieving Outlook account info: {e}"
+        return "Microsoft Outlook is not connected or session expired. Please sign in via the Microsoft Bucket in the application."
 
 
 def mcp_outlook_list_messages(folder: str = "inbox", max_results: int = 15, unread_only: bool = False) -> str:

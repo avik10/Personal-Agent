@@ -122,23 +122,26 @@ def get_access_token() -> str:
     except Exception as e:
         raise MicrosoftAuthError(f"Failed to read token file: {e}")
 
-    access_token = token_data.get("access_token")
+    access_token = (token_data.get("access_token") or "").strip()
     expires_at = token_data.get("expires_at", 0)
-    refresh_tok = token_data.get("refresh_token")
+    refresh_tok = (token_data.get("refresh_token") or "").strip()
 
     # Refresh if expired or expiring within 60 seconds
     if time.time() >= (expires_at - 60):
         if refresh_tok:
             try:
                 new_tokens = refresh_access_token(refresh_tok)
-                return new_tokens.get("access_token", "")
+                refreshed_token = (new_tokens.get("access_token") or "").strip()
+                if refreshed_token:
+                    return refreshed_token
             except Exception as e:
                 logger.warning("Token refresh failed: %s", e)
+                raise MicrosoftAuthError(f"Token refresh failed: {e}. Please re-authenticate.")
         else:
             raise MicrosoftAuthError("Access token expired and no refresh token is present.")
 
     if not access_token:
-        raise MicrosoftAuthError("No access token found in token storage.")
+        raise MicrosoftAuthError("Access token is empty. Please authenticate via Microsoft Bucket.")
 
     return access_token
 
@@ -149,7 +152,7 @@ def is_authenticated() -> bool:
         return False
     try:
         token = get_access_token()
-        return bool(token)
+        return bool(token and token.strip())
     except Exception:
         return False
 
@@ -157,16 +160,30 @@ def is_authenticated() -> bool:
 def get_account_info() -> Dict[str, Any]:
     """Retrieve profile and mailbox details for the authenticated Microsoft user."""
     token = get_access_token()
-    headers = {"Authorization": f"Bearer {token}"}
+    if not token or not token.strip():
+        raise MicrosoftAuthError("Access token is empty.")
+
+    headers = {"Authorization": f"Bearer {token.strip()}"}
 
     with httpx.Client(timeout=10.0) as client:
         res = client.get(f"{GRAPH_BASE_URL}/me", headers=headers)
         if res.status_code != 200:
+            if res.status_code in (401, 403):
+                # Clear invalid/corrupted token file
+                disconnect()
             raise MicrosoftAuthError(f"Failed to fetch Microsoft profile: {res.text}")
 
         profile = res.json()
         email = profile.get("mail") or profile.get("userPrincipalName") or ""
         display_name = profile.get("displayName") or email.split("@")[0] or "Microsoft User"
+
+        return {
+            "authenticated": True,
+            "email": email,
+            "displayName": display_name,
+            "id": profile.get("id"),
+            "status": "connected",
+        }
 
         return {
             "authenticated": True,

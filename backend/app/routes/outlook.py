@@ -129,8 +129,8 @@ def get_outlook_status():
     except Exception as e:
         return {
             "authenticated": False,
-            "email": "Error connecting",
-            "error": str(e),
+            "email": "Not connected",
+            "error": "Session expired or access token is empty.",
             "configured": bool(MICROSOFT_CLIENT_ID),
         }
 
