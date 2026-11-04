@@ -11,23 +11,30 @@ router = APIRouter(tags=["Status"])
 @router.get("/api/status")
 def get_system_status():
     """Retrieve health and connectivity status of the agent, Google Workspace, and Microsoft Outlook."""
-    google_auth = is_google_authenticated()
+    google_auth = False
     google_email = "Not authenticated"
-    if google_auth:
+    if is_google_authenticated():
         try:
             info = get_google_account_info()
-            google_email = info.get("emailAddress", "Connected")
+            if info.get("status") == "authenticated" and info.get("emailAddress"):
+                google_auth = True
+                google_email = info.get("emailAddress")
+            elif info.get("emailAddress") and "@" in info.get("emailAddress", ""):
+                google_auth = True
+                google_email = info.get("emailAddress")
         except Exception:
-            google_email = "Connected"
+            google_auth = False
 
-    ms_auth = is_microsoft_authenticated()
+    ms_auth = False
     ms_email = "Not authenticated"
-    if ms_auth:
+    if is_microsoft_authenticated():
         try:
             ms_info = get_microsoft_account_info()
-            ms_email = ms_info.get("email", "Connected")
+            if ms_info.get("authenticated") and ms_info.get("email"):
+                ms_auth = True
+                ms_email = ms_info.get("email")
         except Exception:
-            ms_email = "Connected"
+            ms_auth = False
 
     active_model = f"{GROQ_MODEL} (Groq Cloud)" if LLM_PROVIDER == "groq" else MODEL_NAME
 
