@@ -119,6 +119,15 @@ def outlook_list_messages(
 
     raw_items = res.json().get("value", [])
 
+    # If folder returned 0 items (e.g. inbox is empty but other folders have mail), fallback to /me/messages
+    if not raw_items and clean_folder in ("inbox", ""):
+        fallback_url = f"{GRAPH_BASE_URL}/me/messages"
+        res_fb = _execute_get(fallback_url, params, token)
+        if res_fb.status_code == 200:
+            fb_items = res_fb.json().get("value", [])
+            if fb_items:
+                raw_items = fb_items
+
     # Sort messages locally by receivedDateTime descending for guaranteed ordering
     try:
         raw_items.sort(key=lambda x: x.get("receivedDateTime") or "", reverse=True)
@@ -280,3 +289,37 @@ def outlook_delete_message(message_id: str) -> Dict[str, Any]:
             raise RuntimeError(f"Failed to delete Outlook message: {res.text}")
 
         return {"status": "deleted", "id": message_id, "source": "outlook"}
+
+
+def outlook_list_folders() -> List[Dict[str, Any]]:
+    """List all mail folders in user mailbox with unread and total message counts."""
+    if not is_authenticated():
+        return []
+
+    try:
+        token = get_access_token().strip()
+    except Exception:
+        return []
+
+    if not token:
+        return []
+
+    headers = {"Authorization": f"Bearer {token}"}
+    url = f"{GRAPH_BASE_URL}/me/mailFolders"
+    params = {"$top": 50}
+
+    with httpx.Client(timeout=15.0) as client:
+        res = client.get(url, headers=headers, params=params)
+        if res.status_code != 200:
+            logger.error("Failed to list mail folders: %s - %s", res.status_code, res.text)
+            return []
+
+        folders = []
+        for f in res.json().get("value", []):
+            folders.append({
+                "id": f.get("id"),
+                "name": f.get("displayName") or "Folder",
+                "unreadCount": f.get("unreadItemCount", 0),
+                "totalCount": f.get("totalItemCount", 0),
+            })
+        return folders

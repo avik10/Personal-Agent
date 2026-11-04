@@ -17,6 +17,7 @@ try:
     )
     from AI.features.microsoft.services.mail import (
         outlook_list_messages,
+        outlook_list_folders,
         outlook_get_message,
         outlook_send_message,
         outlook_mark_read,
@@ -37,6 +38,7 @@ except ImportError:
     )
     from agent.mcp_outlook.services.mail import (
         outlook_list_messages,
+        outlook_list_folders,
         outlook_get_message,
         outlook_send_message,
         outlook_mark_read,
@@ -182,6 +184,17 @@ def disconnect_outlook():
     """Disconnect connected Microsoft account and delete saved credentials."""
     success = disconnect()
     return {"status": "disconnected", "success": success}
+
+
+@router.get("/folders")
+async def list_outlook_folders():
+    """Retrieve all mail folders with unread and total message counts."""
+    if not is_authenticated():
+        return []
+    try:
+        return await asyncio.to_thread(outlook_list_folders)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/messages")

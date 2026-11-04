@@ -20,10 +20,11 @@ import { getApiUrl } from '../../config/api';
 
 export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnected, userEmail }) {
   const [emails, setEmails] = useState([]);
+  const [folders, setFolders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFolder, setActiveFolder] = useState('inbox');
+  const [activeFolder, setActiveFolder] = useState('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState(null);
 
@@ -32,6 +33,19 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
   const [sendForm, setSendForm] = useState({ to: '', subject: '', body: '' });
   const [isSending, setIsSending] = useState(false);
   const [sendStatus, setSendStatus] = useState(null);
+
+  const fetchFolders = async () => {
+    if (!isConnected) return;
+    try {
+      const res = await fetch(getApiUrl('/api/outlook/folders'));
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setFolders(data);
+      }
+    } catch (e) {
+      // silent
+    }
+  };
 
   const fetchEmails = async () => {
     if (!isConnected) return;
@@ -61,6 +75,12 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isConnected) {
+      fetchFolders();
+    }
+  }, [isConnected]);
 
   useEffect(() => {
     fetchEmails();
@@ -241,32 +261,38 @@ export default function OutlookView({ onAskAgent, onOpenConnectModal, isConnecte
         {/* Folder Selectors */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {[
-            { id: 'inbox', label: 'Inbox' },
             { id: 'all', label: 'All Mail' },
+            { id: 'inbox', label: 'Inbox' },
             { id: 'sentitems', label: 'Sent' },
             { id: 'drafts', label: 'Drafts' },
             { id: 'archive', label: 'Archive' },
-          ].map((f) => (
-            <button
-              key={f.id}
-              onClick={() => {
-                setActiveFolder(f.id);
-                setSearchQuery('');
-              }}
-              style={{
-                padding: '7px 12px',
-                borderRadius: '10px',
-                background: activeFolder === f.id ? 'rgba(0, 120, 212, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                border: activeFolder === f.id ? '1px solid rgba(0, 120, 212, 0.5)' : '1px solid rgba(255, 255, 255, 0.06)',
-                color: activeFolder === f.id ? '#60a5fa' : '#9ca3af',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+          ].map((f) => {
+            const folderMeta = folders.find(
+              (item) => item.name?.toLowerCase() === f.label.toLowerCase() || item.id?.toLowerCase() === f.id
+            );
+            const countBadge = folderMeta && folderMeta.totalCount > 0 ? ` (${folderMeta.totalCount})` : '';
+            return (
+              <button
+                key={f.id}
+                onClick={() => {
+                  setActiveFolder(f.id);
+                  setSearchQuery('');
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '10px',
+                  background: activeFolder === f.id ? 'rgba(0, 120, 212, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                  border: activeFolder === f.id ? '1px solid rgba(0, 120, 212, 0.5)' : '1px solid rgba(255, 255, 255, 0.06)',
+                  color: activeFolder === f.id ? '#60a5fa' : '#9ca3af',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {f.label}{countBadge}
+              </button>
+            );
+          })}
 
           {/* Unread Filter Toggle */}
           <button

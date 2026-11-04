@@ -4,14 +4,24 @@ import json
 from typing import Any, List, Optional
 from langchain_core.tools import StructuredTool
 
-from mcp_outlook.services.mail import (
-    outlook_list_messages,
-    outlook_get_message,
-    outlook_send_message,
-    outlook_mark_read,
-    outlook_delete_message,
-)
-from mcp_outlook.auth import is_authenticated, get_account_info
+try:
+    from features.microsoft.services.mail import (
+        outlook_list_messages,
+        outlook_get_message,
+        outlook_send_message,
+        outlook_mark_read,
+        outlook_delete_message,
+    )
+    from features.microsoft.auth import is_authenticated, get_account_info
+except ImportError:
+    from mcp_outlook.services.mail import (
+        outlook_list_messages,
+        outlook_get_message,
+        outlook_send_message,
+        outlook_mark_read,
+        outlook_delete_message,
+    )
+    from mcp_outlook.auth import is_authenticated, get_account_info
 
 
 def _format_output(data: Any) -> str:
@@ -35,15 +45,16 @@ def mcp_outlook_account_info() -> str:
         return "Microsoft Outlook is not connected or session expired. Please sign in via the Microsoft Bucket in the application."
 
 
-def mcp_outlook_list_messages(folder: str = "inbox", max_results: int = 15, unread_only: bool = False) -> str:
-    """List recent emails from Microsoft Outlook inbox or specified folder."""
+def mcp_outlook_list_messages(folder: str = "all", max_results: int = 15, unread_only: bool = False) -> str:
+    """List recent emails from Microsoft Outlook mailbox or specified folder."""
     if not is_authenticated():
         return "Microsoft Outlook is not connected. Please connect your Outlook account in Microsoft Bucket."
     try:
         messages = outlook_list_messages(folder=folder, max_results=max_results, unread_only=unread_only)
         if not messages:
             unread_str = "unread " if unread_only else ""
-            return f"No {unread_str}emails found in Outlook {folder}."
+            target_name = "mailbox" if folder in ("all", "allitems", "") else f"folder {folder}"
+            return f"No {unread_str}emails found in Outlook {target_name}."
 
         lines = [f"Found {len(messages)} Outlook message(s):"]
         for idx, m in enumerate(messages, 1):
