@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from agent.mcp_outlook.auth import (
+from AI.mcp_outlook.auth import (
     is_authenticated,
     get_account_info,
     get_authorization_url,
@@ -14,14 +14,14 @@ from agent.mcp_outlook.auth import (
     disconnect,
     MicrosoftAuthError,
 )
-from agent.mcp_outlook.services.mail import (
+from AI.mcp_outlook.services.mail import (
     outlook_list_messages,
     outlook_get_message,
     outlook_send_message,
     outlook_mark_read,
     outlook_delete_message,
 )
-from agent.mcp_outlook.config import (
+from AI.mcp_outlook.config import (
     MICROSOFT_CLIENT_ID,
     TOKEN_PATH,
 )

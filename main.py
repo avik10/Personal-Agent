@@ -23,7 +23,7 @@ def main():
         sys.argv.pop(1)
         run_server()
     else:
-        from agent.runner import main as run_agent
+        from AI.runner import main as run_agent
         run_agent()
 
 
