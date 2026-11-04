@@ -153,8 +153,8 @@ def get_access_token() -> str:
     expires_at = token_data.get("expires_at", 0)
     refresh_tok = (token_data.get("refresh_token") or "").strip()
 
-    # Refresh if expired or expiring within 60 seconds
-    if time.time() >= (expires_at - 60):
+    # Refresh if access_token is missing/empty or expiring within 60 seconds
+    if not access_token or time.time() >= (expires_at - 60):
         if refresh_tok:
             try:
                 new_tokens = refresh_access_token(refresh_tok)
@@ -165,7 +165,7 @@ def get_access_token() -> str:
                 logger.warning("Token refresh failed: %s", e)
                 raise MicrosoftAuthError(f"Token refresh failed: {e}. Please re-authenticate.")
         else:
-            raise MicrosoftAuthError("Access token expired and no refresh token is present.")
+            raise MicrosoftAuthError("Access token is missing or expired, and no refresh token is present.")
 
     if not access_token:
         raise MicrosoftAuthError("Access token is empty. Please authenticate via Microsoft Bucket.")
@@ -184,17 +184,29 @@ def is_authenticated() -> bool:
         return False
 
 
+class BearerAuth(httpx.Auth):
+    """Preserve Authorization Bearer token across redirects for Microsoft Graph."""
+
+    def __init__(self, token: str):
+        self.token = (token or "").strip()
+
+    def auth_flow(self, request):
+        if self.token:
+            request.headers["Authorization"] = f"Bearer {self.token}"
+        yield request
+
+
 def get_account_info() -> Dict[str, Any]:
     """Retrieve profile and mailbox details for the authenticated Microsoft user."""
     token = get_access_token()
     if not token or not token.strip():
         raise MicrosoftAuthError("Access token is empty.")
 
-    headers = {"Authorization": f"Bearer {token.strip()}"}
+    clean_tok = token.strip()
     profile: Dict[str, Any] = {}
 
-    with httpx.Client(timeout=10.0) as client:
-        res = client.get(f"{GRAPH_BASE_URL}/me", headers=headers)
+    with httpx.Client(timeout=15.0, follow_redirects=True) as client:
+        res = client.get(f"{GRAPH_BASE_URL}/me", auth=BearerAuth(clean_tok))
         if res.status_code == 200:
             profile = res.json()
         elif res.status_code == 401:
@@ -207,7 +219,7 @@ def get_account_info() -> Dict[str, Any]:
                         new_toks = refresh_access_token(tok["refresh_token"])
                         new_tok_val = (new_toks.get("access_token") or "").strip()
                         if new_tok_val:
-                            res2 = client.get(f"{GRAPH_BASE_URL}/me", headers={"Authorization": f"Bearer {new_tok_val}"})
+                            res2 = client.get(f"{GRAPH_BASE_URL}/me", auth=BearerAuth(new_tok_val))
                             if res2.status_code == 200:
                                 profile = res2.json()
             except Exception as ref_err:
