@@ -2,7 +2,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .env.*
-!.env.example
+.env.example
 .DS_Store
 
 # Persistent storage runtime data

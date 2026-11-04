@@ -36,7 +36,11 @@ def decompose_query(user_query: str) -> Tuple[List[str], Dict[str, str]]:
             tasks["habit"] = (tasks.get("habit", "") + " " + p).strip()
 
         # Microsoft Outlook & Services
-        elif any(k in pl for k in ["outlook", "microsoft mail", "hotmail", "live mail", "ms mail", "microsoft account", "microsoft mcp"]):
+        elif (
+            any(k in pl for k in ["outlook", "microsoft mail", "hotmail", "live mail", "ms mail", "microsoft account", "microsoft mcp", "office365", "o365"])
+            or bool(re.search(r'\boutloo*k\b', pl))
+            or bool(re.search(r'\bmicrosoft\s*(?:inbox|mail|email)\b', pl))
+        ):
             tasks["outlook"] = (tasks.get("outlook", "") + " " + p).strip()
 
         # Google Workspace & Services (Sending emails, Gmail, Calendar, Drive, Docs, Tasks, Account)
@@ -50,7 +54,8 @@ def decompose_query(user_query: str) -> Tuple[List[str], Dict[str, str]]:
                 "google task", "google tasks",
                 "google account", "google service", "google services", "google mcp", "connect to google"
             ])
-            and not any(k in pl for k in ["google search", "search google", "search the web", "outlook", "hotmail"])
+            and not any(k in pl for k in ["google search", "search google", "search the web", "hotmail", "microsoft"])
+            and not bool(re.search(r'\boutloo*k\b', pl))
         ):
             tasks["google"] = (tasks.get("google", "") + " " + p).strip()
 
@@ -79,6 +84,7 @@ def decompose_query(user_query: str) -> Tuple[List[str], Dict[str, str]]:
 
     valid_order = [
         "briefing",
+        "outlook",
         "google",
         "weather",
         "finance",
