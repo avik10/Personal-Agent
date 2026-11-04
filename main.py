@@ -9,10 +9,11 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+AI_DIR = PROJECT_ROOT / "AI"
 AGENT_DIR = PROJECT_ROOT / "agent"
 BACKEND_DIR = PROJECT_ROOT / "backend"
 
-for p in (PROJECT_ROOT, AGENT_DIR, BACKEND_DIR):
+for p in (PROJECT_ROOT, AI_DIR, AGENT_DIR, BACKEND_DIR):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
@@ -23,7 +24,10 @@ def main():
         sys.argv.pop(1)
         run_server()
     else:
-        from AI.runner import main as run_agent
+        try:
+            from AI.runner import main as run_agent
+        except ImportError:
+            from agent.runner import main as run_agent
         run_agent()
 
 

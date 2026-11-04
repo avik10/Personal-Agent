@@ -3,7 +3,10 @@
 import asyncio
 from fastapi import APIRouter, HTTPException
 
-from AI import multi_agent_graph
+try:
+    from AI import multi_agent_graph
+except ImportError:
+    from agent import multi_agent_graph
 from ..schemas import ChatQueryRequest, ChatQueryResponse
 
 router = APIRouter(tags=["Chat"])

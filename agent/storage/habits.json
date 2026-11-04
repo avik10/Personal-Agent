@@ -1,0 +1,22 @@
+{
+  "habits": {
+    "workout: pushups": {
+      "dates": [
+        "2026-10-31"
+      ],
+      "notes": [],
+      "streak": 1
+    }
+  },
+  "water": {
+    "2026-10-31": 1500
+  },
+  "workouts": [
+    {
+      "type": "Pushups",
+      "duration": 40,
+      "date": "2026-10-31",
+      "timestamp": "2026-10-31 01:25:23"
+    }
+  ]
+}

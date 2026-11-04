@@ -4,14 +4,24 @@ import json
 from typing import Any, List, Optional
 from langchain_core.tools import StructuredTool
 
-from mcp_outlook.services.mail import (
-    outlook_list_messages,
-    outlook_get_message,
-    outlook_send_message,
-    outlook_mark_read,
-    outlook_delete_message,
-)
-from mcp_outlook.auth import is_authenticated, get_account_info
+try:
+    from features.microsoft.services.mail import (
+        outlook_list_messages,
+        outlook_get_message,
+        outlook_send_message,
+        outlook_mark_read,
+        outlook_delete_message,
+    )
+    from features.microsoft.auth import is_authenticated, get_account_info
+except ImportError:
+    from mcp_outlook.services.mail import (
+        outlook_list_messages,
+        outlook_get_message,
+        outlook_send_message,
+        outlook_mark_read,
+        outlook_delete_message,
+    )
+    from mcp_outlook.auth import is_authenticated, get_account_info
 
 
 def _format_output(data: Any) -> str:

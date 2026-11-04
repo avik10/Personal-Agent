@@ -4,15 +4,16 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Base agent directory and project root
-AGENT_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR = AGENT_DIR  # Backwards compatibility
-PROJECT_ROOT = AGENT_DIR.parent
+# Base AI directory and project root
+AI_DIR = Path(__file__).resolve().parent.parent
+AGENT_DIR = AI_DIR  # Backwards compatibility
+BASE_DIR = AI_DIR   # Backwards compatibility
+PROJECT_ROOT = AI_DIR.parent
 
 # Load environment variables (.env and .env.prod support)
-# 1. Load default .env from project root or agent directory
+# 1. Load default .env from project root or AI directory
 load_dotenv(PROJECT_ROOT / ".env")
-load_dotenv(AGENT_DIR / ".env")
+load_dotenv(AI_DIR / ".env")
 
 # 2. Support custom environment files (e.g. ENV_FILE=.env.prod or APP_ENV=production)
 custom_env = os.getenv("ENV_FILE")
@@ -24,12 +25,13 @@ if custom_env:
         load_dotenv(custom_path, override=True)
 elif app_env in ("prod", "production") and (PROJECT_ROOT / ".env.prod").exists():
     load_dotenv(PROJECT_ROOT / ".env.prod", override=True)
-elif (PROJECT_ROOT / ".env.prod").exists() and not (PROJECT_ROOT / ".env").exists():
-    # In cloud environments where only .env.prod is provided
-    load_dotenv(PROJECT_ROOT / ".env.prod", override=True)
+elif (PROJECT_ROOT / ".env.prod").exists():
+    # Hydrate keys like GROQ_API_KEY from .env.prod if not present
+    if not os.getenv("GROQ_API_KEY"):
+        load_dotenv(PROJECT_ROOT / ".env.prod")
 
-# Storage directory and data file paths (inside agent/storage)
-STORAGE_DIR = AGENT_DIR / "storage"
+# Storage directory and data file paths (inside AI/storage)
+STORAGE_DIR = AI_DIR / "storage"
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 NOTES_FILE = STORAGE_DIR / "notes.txt"

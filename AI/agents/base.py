@@ -17,9 +17,9 @@ logger = logging.getLogger("agent.base")
 
 
 def _init_llm():
-    """Initialize primary LLM: Groq for 24/7 cloud production, or Ollama for local dev."""
-    # 1. Use Groq Cloud if provider is 'groq', or if running in cloud, or if GROQ_API_KEY is available
-    if LLM_PROVIDER == "groq" or (GROQ_API_KEY and IS_CLOUD_ENV):
+    """Initialize primary LLM: Groq for fast cloud execution, or Ollama for local dev."""
+    # 1. Use Groq Cloud if provider is 'groq' or if GROQ_API_KEY is available
+    if LLM_PROVIDER == "groq" or GROQ_API_KEY:
         try:
             from agents.groq_llm import get_groq_llm
             logger.info("Initializing Groq Cloud LLM with model: %s", GROQ_MODEL)

@@ -6,25 +6,46 @@ from typing import Dict, Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from AI.mcp_outlook.auth import (
-    is_authenticated,
-    get_account_info,
-    get_authorization_url,
-    exchange_code_for_token,
-    disconnect,
-    MicrosoftAuthError,
-)
-from AI.mcp_outlook.services.mail import (
-    outlook_list_messages,
-    outlook_get_message,
-    outlook_send_message,
-    outlook_mark_read,
-    outlook_delete_message,
-)
-from AI.mcp_outlook.config import (
-    MICROSOFT_CLIENT_ID,
-    TOKEN_PATH,
-)
+try:
+    from AI.features.microsoft.auth import (
+        is_authenticated,
+        get_account_info,
+        get_authorization_url,
+        exchange_code_for_token,
+        disconnect,
+        MicrosoftAuthError,
+    )
+    from AI.features.microsoft.services.mail import (
+        outlook_list_messages,
+        outlook_get_message,
+        outlook_send_message,
+        outlook_mark_read,
+        outlook_delete_message,
+    )
+    from AI.features.microsoft.config import (
+        MICROSOFT_CLIENT_ID,
+        TOKEN_PATH,
+    )
+except ImportError:
+    from agent.mcp_outlook.auth import (
+        is_authenticated,
+        get_account_info,
+        get_authorization_url,
+        exchange_code_for_token,
+        disconnect,
+        MicrosoftAuthError,
+    )
+    from agent.mcp_outlook.services.mail import (
+        outlook_list_messages,
+        outlook_get_message,
+        outlook_send_message,
+        outlook_mark_read,
+        outlook_delete_message,
+    )
+    from agent.mcp_outlook.config import (
+        MICROSOFT_CLIENT_ID,
+        TOKEN_PATH,
+    )
 from ..schemas import SendEmailModel
 
 router = APIRouter(prefix="/api/outlook", tags=["Microsoft Outlook"])

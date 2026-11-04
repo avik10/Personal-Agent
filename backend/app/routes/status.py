@@ -1,9 +1,14 @@
 """System Status & Agent Directory Routes."""
 
 from fastapi import APIRouter
-from AI.config.settings import MODEL_NAME, LLM_PROVIDER, GROQ_MODEL
-from AI.mcp_google.auth import is_authenticated as is_google_authenticated, get_account_info as get_google_account_info
-from AI.mcp_outlook.auth import is_authenticated as is_microsoft_authenticated, get_account_info as get_microsoft_account_info
+try:
+    from AI.config.settings import MODEL_NAME, LLM_PROVIDER, GROQ_MODEL
+    from AI.features.google.auth import is_authenticated as is_google_authenticated, get_account_info as get_google_account_info
+    from AI.features.microsoft.auth import is_authenticated as is_microsoft_authenticated, get_account_info as get_microsoft_account_info
+except ImportError:
+    from agent.config.settings import MODEL_NAME, LLM_PROVIDER, GROQ_MODEL
+    from agent.mcp_google.auth import is_authenticated as is_google_authenticated, get_account_info as get_google_account_info
+    from agent.mcp_outlook.auth import is_authenticated as is_microsoft_authenticated, get_account_info as get_microsoft_account_info
 
 router = APIRouter(tags=["Status"])
 

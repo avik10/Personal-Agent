@@ -8,23 +8,42 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 
-from AI.mcp_google.auth import is_authenticated, get_account_info
-from AI.mcp_google.services.gmail import gmail_search_messages, gmail_send_message
-from AI.mcp_google.services.calendar import calendar_get_agenda, calendar_create_event
-from AI.mcp_google.services.drive import drive_search_files
-from AI.mcp_google.services.tasks import (
-    tasks_list_tasks,
-    tasks_create_task,
-    tasks_complete_task,
-    tasks_delete_task,
-)
-from AI.mcp_google.services.keep import (
-    keep_list_notes,
-    keep_create_note,
-    keep_delete_note,
-)
-from AI.mcp_google.setup_auth import run_auth_flow
-from AI.mcp_google.config import CREDENTIALS_PATH, TOKEN_PATH, DEFAULT_SCOPES
+try:
+    from AI.features.google.auth import is_authenticated, get_account_info
+    from AI.features.google.services.gmail import gmail_search_messages, gmail_send_message
+    from AI.features.google.services.calendar import calendar_get_agenda, calendar_create_event
+    from AI.features.google.services.drive import drive_search_files
+    from AI.features.google.services.tasks import (
+        tasks_list_tasks,
+        tasks_create_task,
+        tasks_complete_task,
+        tasks_delete_task,
+    )
+    from AI.features.google.services.keep import (
+        keep_list_notes,
+        keep_create_note,
+        keep_delete_note,
+    )
+    from AI.features.google.setup_auth import run_auth_flow
+    from AI.features.google.config import CREDENTIALS_PATH, TOKEN_PATH, DEFAULT_SCOPES
+except ImportError:
+    from agent.mcp_google.auth import is_authenticated, get_account_info
+    from agent.mcp_google.services.gmail import gmail_search_messages, gmail_send_message
+    from agent.mcp_google.services.calendar import calendar_get_agenda, calendar_create_event
+    from agent.mcp_google.services.drive import drive_search_files
+    from agent.mcp_google.services.tasks import (
+        tasks_list_tasks,
+        tasks_create_task,
+        tasks_complete_task,
+        tasks_delete_task,
+    )
+    from agent.mcp_google.services.keep import (
+        keep_list_notes,
+        keep_create_note,
+        keep_delete_note,
+    )
+    from agent.mcp_google.setup_auth import run_auth_flow
+    from agent.mcp_google.config import CREDENTIALS_PATH, TOKEN_PATH, DEFAULT_SCOPES
 from ..schemas import SendEmailModel, CreateEventModel, CreateNoteModel
 
 router = APIRouter(prefix="/api/google", tags=["Google Workspace"])

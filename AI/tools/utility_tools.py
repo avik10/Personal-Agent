@@ -405,8 +405,10 @@ def get_system_status() -> str:
         return f"Error retrieving system status: {e}"
 
 
-def fetch_url_text(url: str, max_chars: int = 2000) -> str:
+def fetch_url_text(url: str = "", max_chars: int = 2000) -> str:
     """Fetch text content from a web URL and extract readable text."""
+    if not url or not url.strip():
+        return "No URL provided to fetch."
     try:
         req = urllib.request.Request(
             url,
